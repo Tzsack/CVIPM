@@ -1,6 +1,7 @@
 from astropy.io import fits
-file = fits.open("../Skymaps/skymap_221_46.fits")
+file = fits.open("../Skymaps/skymap_221_47_1.fits")
 matrix = file[0].data
-for v in matrix:
-    print(v)
-
+for i in matrix:
+    for j in i:
+        if j >= 4:
+            print(j)
