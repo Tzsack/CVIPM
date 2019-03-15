@@ -5,15 +5,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6896100b-19c3-4811-a5dc-18f996cd463b" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/../Events/events_221_47_05.fits" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../Events/events_221_47_08.fits" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../Models/ctobssim.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../Models/sigma4_221_47_05.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../Models/sigma4_221_47_08.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../Skymaps/skymap_221_47_05.fits" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../Skymaps/skymap_221_47_08.fits" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../ctobssim.log" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../ctskymap.log" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/source_finder.py" beforeDir="false" afterPath="$PROJECT_DIR$/source_finder.py" afterDir="false" />
     </list>
@@ -28,8 +19,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/test.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="38">
-              <caret line="4" column="49" selection-start-line="4" selection-start-column="18" selection-end-line="4" selection-end-column="49" />
+            <state relative-caret-position="323">
+              <caret line="17" column="25" lean-forward="true" selection-start-line="17" selection-start-column="25" selection-end-line="17" selection-end-column="25" />
               <folding>
                 <element signature="e#0#16#0" expanded="true" />
               </folding>
@@ -40,8 +31,11 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/source_finder.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="288">
-              <caret line="105" column="15" selection-start-line="105" selection-start-column="15" selection-end-line="105" selection-end-column="15" />
+            <state relative-caret-position="579">
+              <caret line="110" column="15" lean-forward="true" selection-start-line="110" selection-start-column="15" selection-end-line="110" selection-end-column="15" />
+              <folding>
+                <element signature="e#0#16#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -181,7 +175,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="67" y="25" width="1853" height="1055" extended-state="6" />
+    <frame x="67" y="25" width="1853" height="950" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.18797815" />
@@ -189,7 +183,7 @@
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.28401726" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.32034105" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.39829478" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -210,8 +204,8 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/test.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="38">
-          <caret line="4" column="49" selection-start-line="4" selection-start-column="18" selection-end-line="4" selection-end-column="49" />
+        <state relative-caret-position="323">
+          <caret line="17" column="25" lean-forward="true" selection-start-line="17" selection-start-column="25" selection-end-line="17" selection-end-column="25" />
           <folding>
             <element signature="e#0#16#0" expanded="true" />
           </folding>
@@ -220,8 +214,11 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/source_finder.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="288">
-          <caret line="105" column="15" selection-start-line="105" selection-start-column="15" selection-end-line="105" selection-end-column="15" />
+        <state relative-caret-position="579">
+          <caret line="110" column="15" lean-forward="true" selection-start-line="110" selection-start-column="15" selection-end-line="110" selection-end-column="15" />
+          <folding>
+            <element signature="e#0#16#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

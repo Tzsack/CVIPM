@@ -22,20 +22,6 @@ class SourceFinder:
         else:
             return 5, 5
 
-    # @staticmethod
-    # def best_candidate(candidates):
-    #     """Return most voted candidate in candidates"""
-    #     result = candidates[0]
-    #     max_votes = 0
-    #
-    #     for source in candidates:
-    #         print(source)
-    #         if candidates.count(source) > max_votes:
-    #             max_votes = candidates.count(source)
-    #             result = source
-    #
-    #     return result
-
     @staticmethod
     def distance(a, b):
         return abs(a[0] - b[0]) + abs(a[1] - b[1])
@@ -65,6 +51,7 @@ class SourceFinder:
         average_y = 0
 
         for i in range(0, len(candidates)):
+            print(candidates[i], labels[i])
             if labels[i] == winner:
                 average_x += candidates[i][0]
                 average_y += candidates[i][1]
@@ -98,12 +85,13 @@ class SourceFinder:
         candidates = []
 
         out = cv.GaussianBlur(self.matrix, self.kernel_size(min_sigma), min_sigma)
-        # cv.imshow("a"+str(0), out)
+        candidates.append(np.unravel_index(np.argmax(out, axis=None), out.shape))
+        # cv.imshow("a"+str(0), 1/(out[candidates[0][0]][candidates[0][1]])*out)
 
         for i in range(0, steps):
             out = cv.GaussianBlur(out, self.kernel_size(step_sigma), step_sigma)
-            # cv.imshow("a"+str(i+1), out)
             candidates.append(np.unravel_index(np.argmax(out, axis=None), out.shape))
+            # cv.imshow("a"+str(i+1), 1/(out[candidates[i][0]][candidates[i][1]])*out)
 
         best_candidate = self.best_candidate(candidates)
         return best_candidate[1], best_candidate[0]
@@ -113,13 +101,14 @@ class SourceFinder:
         w = WCS(self.file_name)
         return w.all_pix2world(source_pixels[0], source_pixels[1], 0)
 
+# Test main
 
-fits_file = "../Skymaps/skymap_221_47.fits"
+fits_file = "../Skymaps/skymap_221-0_47-0_1-0.fits"
 sf = SourceFinder(fits_file)
 sf.load_fits_file()
-pixels_coord = sf.source_pixels(0.5, 0.5, 100)
+pixels_coord = sf.source_pixels(0.0001, 1.5, 10)
 lon, lat = sf.source_world(pixels_coord)
 print(lon, lat)
 
-cv.waitKey(0)
-cv.destroyAllWindows()
+# cv.waitKey(0)
+# cv.destroyAllWindows()
