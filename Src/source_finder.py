@@ -22,18 +22,57 @@ class SourceFinder:
         else:
             return 5, 5
 
+    # @staticmethod
+    # def best_candidate(candidates):
+    #     """Return most voted candidate in candidates"""
+    #     result = candidates[0]
+    #     max_votes = 0
+    #
+    #     for source in candidates:
+    #         print(source)
+    #         if candidates.count(source) > max_votes:
+    #             max_votes = candidates.count(source)
+    #             result = source
+    #
+    #     return result
+
+    @staticmethod
+    def distance(a, b):
+        return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
     @staticmethod
     def best_candidate(candidates):
         """Return most voted candidate in candidates"""
-        result = candidates[0]
+
+        labels = [0]
+        threshold = 1
+
+        for i in range(1, len(candidates)):
+            if SourceFinder.distance(candidates[i], candidates[i-1]) <= threshold:
+                labels.append(labels[i-1])
+            else:
+                labels.append(labels[i-1]+1)
+
+        winner = labels[0]
         max_votes = 0
 
-        for source in candidates:
-            if candidates.count(source) > max_votes:
-                max_votes = candidates.count(source)
-                result = source
+        for label in labels:
+            if labels.count(label) > max_votes:
+                max_votes = labels.count(label)
+                winner = label
 
-        return result
+        average_x = 0
+        average_y = 0
+
+        for i in range(0, len(candidates)):
+            if labels[i] == winner:
+                average_x += candidates[i][0]
+                average_y += candidates[i][1]
+
+        average_x /= labels.count(winner)
+        average_y /= labels.count(winner)
+
+        return average_x, average_y
 
     def load_fits_file(self):
         """Save the fits image in the matrix attribute"""
@@ -41,14 +80,29 @@ class SourceFinder:
         self.matrix = np.array(file[0].data, np.float64)
         file.close()
 
-    def source_pixels(self, min_sigma=1.0, max_sigma=3.0, steps=10):
+    # def source_pixels(self, min_sigma=1.0, max_sigma=3.0, steps=10):
+    #     """Search the source pixels position in the image"""
+    #     candidates = []
+    #
+    #     for i in range(0, steps):
+    #         sigma = min_sigma + ((max_sigma - min_sigma)/steps)*i
+    #         out = cv.GaussianBlur(self.matrix, self.kernel_size(sigma), sigma)
+    #         # cv.imshow("a"+str(i), out)
+    #         candidates.append(np.unravel_index(np.argmax(out, axis=None), out.shape))
+    #
+    #     best_candidate = self.best_candidate(candidates)
+    #     return best_candidate[1], best_candidate[0]
+
+    def source_pixels(self, min_sigma=1.0, step_sigma=0.5, steps=10):
         """Search the source pixels position in the image"""
         candidates = []
 
+        out = cv.GaussianBlur(self.matrix, self.kernel_size(min_sigma), min_sigma)
+        # cv.imshow("a"+str(0), out)
+
         for i in range(0, steps):
-            sigma = min_sigma + ((max_sigma - min_sigma)/steps)*i
-            out = cv.GaussianBlur(self.matrix, self.kernel_size(sigma), sigma)
-            # cv.imshow("a"+str(i), out)
+            out = cv.GaussianBlur(out, self.kernel_size(step_sigma), step_sigma)
+            # cv.imshow("a"+str(i+1), out)
             candidates.append(np.unravel_index(np.argmax(out, axis=None), out.shape))
 
         best_candidate = self.best_candidate(candidates)
@@ -63,7 +117,7 @@ class SourceFinder:
 fits_file = "../Skymaps/skymap_221_47.fits"
 sf = SourceFinder(fits_file)
 sf.load_fits_file()
-pixels_coord = sf.source_pixels(1.5, 3.5, 10)
+pixels_coord = sf.source_pixels(0.5, 0.5, 100)
 lon, lat = sf.source_world(pixels_coord)
 print(lon, lat)
 
