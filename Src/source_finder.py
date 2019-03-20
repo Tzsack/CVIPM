@@ -8,16 +8,10 @@ import matplotlib.pyplot as plt
 
 class SourceFinder:
 
-    def __init__(self, file_name):
+    def __init__(self, fits_file_name):
         """Constructor"""
-        self.file_name = file_name
-        self.matrix = None
-
-    def load_fits_file(self):
-        """Save the fits image in the matrix attribute"""
-        file = fits.open(self.file_name)
-        self.matrix = np.array(file[0].data, np.float64)
-        file.close()
+        self.matrix = Util.from_fits_to_mat(fits_file_name)
+        self.wcs = WCS(fits_file_name)
 
     @staticmethod
     def display_data(img, maxima):
@@ -48,7 +42,7 @@ class SourceFinder:
     def source_pixels_routine(self, image):
         maximum = np.max(image, axis=None)
         thresholded = image
-        print(maximum)
+        # print(maximum)
         for i in range(0, len(image)):
             for j in range(0, len(image)):
                 if image[i][j] < maximum * 0.5:
@@ -71,20 +65,19 @@ class SourceFinder:
 
         return 0, 0
 
-    def source_world(self, source_pixels):
-        """Return world coordinates for the given pixel position source_pixels"""
-        w = WCS(self.file_name)
-        return w.all_pix2world(source_pixels[0], source_pixels[1], 0)
 
-# Test main
+def main():
+    fits_file = "../Skymaps/skymap_221-0_47-0_0-8.fits"
+    sf = SourceFinder(fits_file)
+    # cv.imshow("a", sf.matrix)
+    pixels_coord = sf.source_pixels(1, 2, 5)
+    print(pixels_coord)
+    lon, lat = Util.from_pixel_to_wcs(pixels_coord, sf.wcs)
+    print(lon, lat)
+    plt.show()
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
 
-fits_file = "../Skymaps/skymap_221-0_47-0_0-8.fits"
-sf = SourceFinder(fits_file)
-sf.load_fits_file()
-pixels_coord = sf.source_pixels(1, 2, 5)
-# lon, lat = sf.source_world(pixels_coord)
-# print(lon, lat)
-plt.show()
-cv.waitKey(0)
-cv.destroyAllWindows()
+# test main
+main()

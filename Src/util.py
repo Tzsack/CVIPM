@@ -8,6 +8,19 @@ import math
 class Util:
 
     @staticmethod
+    def from_fits_to_mat(fits_file_name):
+        """Return numpy matrix from fits file fits_file_name"""
+        file = fits.open(fits_file_name)
+        matrix = np.array(file[0].data, np.float64)
+        file.close()
+        return matrix
+
+    @staticmethod
+    def from_pixel_to_wcs(pixel_coord, wcs):
+        """Return world coordinates for the given pixel coordinates pixel_coord"""
+        return wcs.all_pix2world(pixel_coord[0], pixel_coord[1], 0)
+
+    @staticmethod
     def kernel_size(sigma):
         """Determine kernel size according to sigma"""
         size = int(sigma * 6)
@@ -21,6 +34,15 @@ class Util:
     @staticmethod
     def distance4(a, b):
         return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+    @staticmethod
+    def neigh4(p):
+        return [
+            (p[0] - 1, p[1]),
+            (p[0], p[1] - 1),
+            (p[0] + 1, p[1]),
+            (p[0], p[1] + 1)
+        ]
 
     @staticmethod
     def distance8(a, b):
@@ -37,15 +59,6 @@ class Util:
             (p[0] + 1, p[1] - 1),
             (p[0] + 1, p[1]),
             (p[0] + 1, p[1] + 1)
-        ]
-
-    @staticmethod
-    def neigh4(p):
-        return [
-            (p[0] - 1, p[1]),
-            (p[0], p[1] - 1),
-            (p[0] + 1, p[1]),
-            (p[0], p[1] + 1)
         ]
 
     @staticmethod
