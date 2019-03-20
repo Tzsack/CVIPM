@@ -1,16 +1,28 @@
 import cv2 as cv
 import numpy as np
 from util import Util
-from astropy.io import fits
 from astropy.wcs import WCS
+
+
+skymaps = ["../Skymaps/01-skymap_220-0_46-0.fits",
+           "../Skymaps/02-skymap_221-0_46-0.fits",
+           "../Skymaps/03-skymap_221-0_46-0_4-0.fits",
+           "../Skymaps/04-skymap_221-0_47-0.fits",
+           "../Skymaps/05-skymap_221-0_47-0_0-0.fits",
+           "../Skymaps/06-skymap_221-0_47-0_0-5.fits",
+           "../Skymaps/07-skymap_221-0_47-0_0-8.fits",
+           "../Skymaps/08-skymap_221-0_47-0_1-0.fits",
+           "../Skymaps/09-skymap_221-5_45-5.fits",
+           "../Skymaps/10-skymap_bgonly.fits"
+           ]
 
 
 class SourceFinder:
 
     def __init__(self, file_name):
         """Constructor"""
-        self.file_name = file_name
-        self.matrix = None
+        self.matrix = Util.from_fits_to_mat(file_name)
+        self.wcs = WCS(file_name)
 
     @staticmethod
     def best_candidate(candidates):
@@ -47,12 +59,6 @@ class SourceFinder:
 
         return average_x, average_y
 
-    def load_fits_file(self):
-        """Save the fits image in the matrix attribute"""
-        file = fits.open(self.file_name)
-        self.matrix = np.array(file[0].data, np.float64)
-        file.close()
-
     # def source_pixels(self, min_sigma=1.0, max_sigma=3.0, steps=10):
     #     """Search the source pixels position in the image."""
     #     candidates = []
@@ -72,27 +78,26 @@ class SourceFinder:
 
         out = cv.GaussianBlur(self.matrix, Util.kernel_size(min_sigma), min_sigma)
         candidates.append(np.unravel_index(np.argmax(out, axis=None), out.shape))
-        cv.imshow("a"+str(0), 1/(out[candidates[0][0]][candidates[0][1]])*out)
+        # cv.imshow("a"+str(0), 1/(out[candidates[0][0]][candidates[0][1]])*out)
 
         for i in range(0, steps):
             out = cv.GaussianBlur(out, Util.kernel_size(step_sigma), step_sigma)
             candidates.append(np.unravel_index(np.argmax(out, axis=None), out.shape))
-            cv.imshow("a"+str(i+1), 1/(out[candidates[i][0]][candidates[i][1]])*out)
+            # cv.imshow("a"+str(i+1), 1/(out[candidates[i][0]][candidates[i][1]])*out)
 
         best_candidate = self.best_candidate(candidates)
         return best_candidate[1], best_candidate[0]
 
     def source_world(self, source_pixels):
         """Return world coordinates for the given pixel position source_pixels"""
-        w = WCS(self.file_name)
-        return w.all_pix2world(source_pixels[0], source_pixels[1], 0)
+        return Util.from_pix_to_wcs(source_pixels, self.wcs)
 
 
-def main():
-    fits_file = "../Skymaps/skymap_221-0_47-0_0-8_no_source.fits"
-    sf = SourceFinder(fits_file)
-    sf.load_fits_file()
+def main(index):
+    sf = SourceFinder(skymaps[index])
+    print(skymaps[index])
     pixels_coord = sf.source_pixels(0.0001, 1.5, 10)
+    print(pixels_coord)
     lon, lat = sf.source_world(pixels_coord)
     print(lon, lat)
 
@@ -101,4 +106,4 @@ def main():
 
 
 # Test main
-# main()
+main(7)

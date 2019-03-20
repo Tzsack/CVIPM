@@ -1,8 +1,5 @@
-import cv2 as cv
 import numpy as np
 from astropy.io import fits
-import matplotlib.pyplot as plt
-import math
 
 
 class Util:
@@ -14,6 +11,10 @@ class Util:
         matrix = np.array(file[0].data, np.float64)
         file.close()
         return matrix
+
+    @staticmethod
+    def flip_mat(mat):
+        return np.flip(mat, 0)
 
     @staticmethod
     def from_pix_to_wcs(pixel_coord, wcs):
@@ -74,3 +75,11 @@ class Util:
                     maxima.append(((i, j), img[i][j]))
         return maxima
 
+    @staticmethod
+    def project_list(l, pos):
+        return [x[pos] for x in l]
+
+    @staticmethod
+    def sort_list(l, pos, reverse):
+        l.sort(key=lambda x: x[pos], reverse=reverse)
+        return l

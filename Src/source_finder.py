@@ -6,6 +6,19 @@ from astropy.wcs import WCS
 import matplotlib.pyplot as plt
 
 
+skymaps = ["../Skymaps/01-skymap_220-0_46-0.fits",
+           "../Skymaps/02-skymap_221-0_46-0.fits",
+           "../Skymaps/03-skymap_221-0_46-0_4-0.fits",
+           "../Skymaps/04-skymap_221-0_47-0.fits",
+           "../Skymaps/05-skymap_221-0_47-0_0-0.fits",
+           "../Skymaps/06-skymap_221-0_47-0_0-5.fits",
+           "../Skymaps/07-skymap_221-0_47-0_0-8.fits",
+           "../Skymaps/08-skymap_221-0_47-0_1-0.fits",
+           "../Skymaps/09-skymap_221-5_45-5.fits",
+           "../Skymaps/10-skymap_bgonly.fits"
+           ]
+
+
 class SourceFinder:
 
     def __init__(self, fits_file_name):
@@ -27,8 +40,8 @@ class SourceFinder:
         cv.imshow("maxima", img)
 
         # print(maxima)
-        maxima.sort(key=lambda x: x[1], reverse=False)
-        # print(maxima)
+        maxima.sort(key=lambda x: x[1], reverse=True)
+        print(maxima)
 
         plot_values = []
         for i in range(1, len(maxima)):
@@ -41,11 +54,11 @@ class SourceFinder:
 
     def source_pixels_routine(self, image):
         maximum = np.max(image, axis=None)
-        thresholded = image
+        thresholded = np.copy(image)
         # print(maximum)
         for i in range(0, len(image)):
             for j in range(0, len(image)):
-                if image[i][j] < maximum * 0.5:
+                if image[i][j] < maximum * 0:
                     thresholded[i][j] = 0
                 else:
                     thresholded[i][j] = image[i][j]
@@ -65,13 +78,56 @@ class SourceFinder:
 
         return 0, 0
 
+    @staticmethod
+    def cut(arr, threshold):
+        result = []
+        for element in arr:
+            if element >= threshold:
+                result.append(element)
+        return result
 
-def main():
-    fits_file = "../Skymaps/10-skymap_bgonly.fits"
-    sf = SourceFinder(fits_file)
+    def source_pixels2(self, sigma_min=1.0, sigma_step=0.5, steps=10):
+        candidates = []
+        smoothed = cv.GaussianBlur(self.matrix, Util.kernel_size(sigma_min), sigma_min)
+        maxima = Util.local_maxima(smoothed)
+        print(Util.sort_list(maxima, 1, True))
+        maxima_val = Util.project_list(maxima, 1)
+        print(maxima_val[0] - maxima_val[1])
+
+        for i in range(0, steps):
+            smoothed = cv.GaussianBlur(smoothed, Util.kernel_size(sigma_step), sigma_step)
+            maxima = Util.local_maxima(smoothed)
+            print(Util.sort_list(maxima, 1, True))
+            maxima_val = Util.project_list(maxima, 1)
+            print(maxima_val[0] - maxima_val[1])
+
+        return 0, 0
+
+
+def main(index):
+    sf = SourceFinder(skymaps[index])
+    print(skymaps[index])
     # cv.imshow("a", sf.matrix)
-    pixels_coord = sf.source_pixels(1, 2, 5)
-    # print(pixels_coord)
+    """
+    maxima = Util.local_maxima(sf.matrix)
+    Util.sort_list(maxima, 1, True)
+    maxima_values = Util.project_list(maxima, 1)
+    # print(maxima_values)
+
+    smoothed = cv.GaussianBlur(sf.matrix, (3, 3), 1.5)
+    # cv.imshow("b", smoothed)
+    s_maxima = Util.local_maxima(smoothed)
+    s_maxima = Util.sort_list(s_maxima, 1, True)
+
+    s_maxima_values = Util.project_list(s_maxima, 1)
+    s_maxima_pos = Util.project_list(s_maxima, 0)
+    print(s_maxima_values)
+    print(s_maxima_pos)
+    x, y = Util.from_pix_to_wcs((s_maxima_pos[0][1], s_maxima_pos[0][0]), sf.wcs)
+    print(x, y)
+    """
+    pixels_coord = sf.source_pixels2(1, 2, 5)
+    print(pixels_coord)
     lon, lat = Util.from_pix_to_wcs(pixels_coord, sf.wcs)
     print(lon, lat)
     plt.show()
@@ -80,4 +136,4 @@ def main():
 
 
 # test main
-main()
+main(2)
