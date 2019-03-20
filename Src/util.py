@@ -16,7 +16,7 @@ class Util:
         return matrix
 
     @staticmethod
-    def from_pixel_to_wcs(pixel_coord, wcs):
+    def from_pix_to_wcs(pixel_coord, wcs):
         """Return world coordinates for the given pixel coordinates pixel_coord"""
         return wcs.all_pix2world(pixel_coord[0], pixel_coord[1], 0)
 

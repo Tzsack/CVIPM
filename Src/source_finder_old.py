@@ -87,14 +87,18 @@ class SourceFinder:
         w = WCS(self.file_name)
         return w.all_pix2world(source_pixels[0], source_pixels[1], 0)
 
+
+def main():
+    fits_file = "../Skymaps/skymap_221-0_47-0_0-8_no_source.fits"
+    sf = SourceFinder(fits_file)
+    sf.load_fits_file()
+    pixels_coord = sf.source_pixels(0.0001, 1.5, 10)
+    lon, lat = sf.source_world(pixels_coord)
+    print(lon, lat)
+
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
+
 # Test main
-
-fits_file = "../Skymaps/skymap_221-0_47-0_0-8_no_source.fits"
-sf = SourceFinder(fits_file)
-sf.load_fits_file()
-pixels_coord = sf.source_pixels(0.0001, 1.5, 10)
-lon, lat = sf.source_world(pixels_coord)
-print(lon, lat)
-
-cv.waitKey(0)
-cv.destroyAllWindows()
+# main()

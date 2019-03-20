@@ -67,12 +67,12 @@ class SourceFinder:
 
 
 def main():
-    fits_file = "../Skymaps/skymap_221-0_47-0_0-8.fits"
+    fits_file = "../Skymaps/10-skymap_bgonly.fits"
     sf = SourceFinder(fits_file)
     # cv.imshow("a", sf.matrix)
     pixels_coord = sf.source_pixels(1, 2, 5)
-    print(pixels_coord)
-    lon, lat = Util.from_pixel_to_wcs(pixels_coord, sf.wcs)
+    # print(pixels_coord)
+    lon, lat = Util.from_pix_to_wcs(pixels_coord, sf.wcs)
     print(lon, lat)
     plt.show()
     cv.waitKey(0)
