@@ -63,6 +63,22 @@ class Util:
         ]
 
     @staticmethod
+    def neigh8_radius(pixel, radius):
+        starters = [pixel]
+        derived = []
+        for i in range(1, radius + 1):
+            starters.append((pixel[0] - i, pixel[1]))
+            starters.append((pixel[0] + i, pixel[1]))
+        for i in range(1, radius + 1):
+            for starter in starters:
+                derived.append((starter[0], starter[1] - i))
+                derived.append((starter[0], starter[1] + i))
+        starters.remove(pixel)
+        neighbourhood = starters + derived
+        # neighbourhood.sort(key=lambda x: (x[0], x[1]))
+        return neighbourhood
+
+    @staticmethod
     def local_maxima(img):
         maxima = []
         for i in range(1, len(img) - 1):
@@ -80,6 +96,6 @@ class Util:
         return [x[pos] for x in l]
 
     @staticmethod
-    def sort_list(l, pos, reverse):
+    def sort_list(l, pos, reverse=False):
         l.sort(key=lambda x: x[pos], reverse=reverse)
         return l
