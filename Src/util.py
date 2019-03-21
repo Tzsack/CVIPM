@@ -85,7 +85,7 @@ class Util:
             for j in range(1, len(img[i]) - 1):
                 is_max = True
                 for p in Util.neigh8((i, j)):
-                    if img[p[0]][p[1]] >= img[i][j]:
+                    if img[p[0]][p[1]] > img[i][j]:
                         is_max = False
                 if is_max:
                     maxima.append(((i, j), img[i][j]))

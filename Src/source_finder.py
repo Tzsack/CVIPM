@@ -1,7 +1,9 @@
 import cv2 as cv
 from util import Util
+from gaussian_interpolation import GInterpolation as gi
 from astropy.wcs import WCS
 import matplotlib.pyplot as plt
+import numpy as np
 import os
 
 
@@ -73,18 +75,47 @@ def main2(indexes, sigma):
     # cv.imshow(skymaps[index - 1] + str(index), Util.flip_mat(mat))
     Util.sort_list(maxima, 1, True)
     # print(skymaps[index - 1], maxima)
-    # plt.plot(Util.project_list(maxima, 1), label=''+str(index))
-    # plt.legend()
+    plt.plot(Util.project_list(maxima, 1), label=''+str(index))
+    plt.legend()
     # cv.waitKey(0)
     # cv.destroyAllWindows()
 
 
-main(1)
+def test_gaussian_interpolator():
+    os.chdir("../Skymaps")
+    skymaps = os.listdir(".")
+    skymaps.sort()
 
-"""
+    index = 1
+    sf = SourceFinder(skymaps[index - 1])
+
+    mu = (104.5, 125.3)
+    sigma = 3
+
+    for i in range(0, 200):
+        for j in range(0, 200):
+            sf.matrix[i][j] = gi.gaussian((i, j), mu, sigma)
+
+    cv.imshow("gaussian", sf.matrix * 1/(np.amax(sf.matrix)))
+
+    maximum = Util.sort_list(Util.local_maxima(sf.matrix), 1, True)[0][0]
+
+    estimated_mu = gi.estimate_mu(sf.matrix, maximum, sigma, 10)
+    print("Apex = ", mu)
+    print("Maximum =", maximum)
+    print("Estimated Apex =", estimated_mu)
+
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
+
+# main
+
 # test main
-for i in range(0, 10):
-    main2([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], 0.5*i + 0.01)
-    #plt.figure()
-#plt.show()
-"""
+# for i in range(0, 10):
+#     main2([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], 0.5*i + 0.01)
+#     plt.figure()
+# plt.show()
+
+test_gaussian_interpolator()
+
