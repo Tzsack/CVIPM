@@ -85,13 +85,14 @@ class Util:
         for i in range(0, len(img)):
             for j in range(0, len(img[i])):
                 is_max = True
-                if img[i][j] > maximum[1]:
-                    maximum = ((i, j), img[i][j])
-                for p in Util.neigh8((i, j)):
-                    if 0 <= p[0] < len(img) and 0 <= p[1] < len(img[i]) and img[p[0]][p[1]] > img[i][j]:
-                        is_max = False
-                if is_max:
-                    maxima.append(((i, j), img[i][j]))
+                if img[i][j] != 0:
+                    if img[i][j] > maximum[1]:
+                        maximum = ((i, j), img[i][j])
+                    for p in Util.neigh8((i, j)):
+                        if 0 <= p[0] < len(img) and 0 <= p[1] < len(img[i]) and img[p[0]][p[1]] > img[i][j]:
+                            is_max = False
+                    if is_max:
+                        maxima.append(((i, j), img[i][j]))
         if maxima.count(maximum) == 0:
             maxima.append(maximum)
         return maxima

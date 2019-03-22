@@ -16,6 +16,20 @@ class GInterpolation:
         return 1/(2*pow(sigma, 2)*math.pi)*math.exp((-pow(p[0] - mu[0], 2) - pow(p[1] - mu[1], 2))/(2*pow(sigma, 2)))
 
     @staticmethod
+    def estimate_prefactor(mat, mu, sigma):
+        nearest_x = int(mu[0])
+        nearest_y = int(mu[1])
+        if mu[0] < 0:
+            nearest_x = 0
+        elif mu[0] >= len(mat) - 1:
+            nearest_x = len(mat) - 1
+        if mu[1] < 0:
+            nearest_y = 0
+        elif mu[1] >= len(mat[0]) - 1:
+            nearest_y = len(mat[0]) - 1
+        return mat[nearest_x][nearest_y] / GInterpolation.gaussian((nearest_x, nearest_y), mu, sigma)
+
+    @staticmethod
     def estimate_mu(mat, maximum, sigma, radius=2):
         if radius <= 0:
             return maximum

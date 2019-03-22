@@ -84,57 +84,30 @@ def main2(indexes, sigma):
     skymaps = os.listdir(".")
     skymaps.sort()
 
-    index = 1
-    sf = SourceFinder(skymaps[index - 1])
-    mat = cv.GaussianBlur(sf.matrix, Util.kernel_size(sigma), sigma)
-    maxima = Util.local_maxima(mat)
-    # cv.imshow(skymaps[index - 1] + str(index), Util.flip_mat(mat))
-    Util.sort_list(maxima, 1, True)
-    # print(skymaps[index - 1], maxima)
-    plt.plot(Util.project_list(maxima, 1), label=''+str(index))
-    plt.legend()
-    # cv.waitKey(0)
-    # cv.destroyAllWindows()
-
-
-def test_gaussian_interpolator():
-    os.chdir("../Skymaps")
-    skymaps = os.listdir(".")
-    skymaps.sort()
-
-    index = 1
-    sf = SourceFinder(skymaps[index - 1])
-
-    # mu = (-5, 125.3)
-    sigma = 5
-    radius = 2
-
-    # for i in range(0, 200):
-    #     for j in range(0, 200):
-    #         sf.matrix[i][j] = gi.gaussian((i, j), mu, sigma)
-
-    sf.matrix = cv.GaussianBlur(sf.matrix, Util.kernel_size(sigma), sigma)
-    cv.imshow("img", sf.matrix * 1/(np.amax(sf.matrix)))
-
-    maxima = Util.sort_list(Util.local_maxima(sf.matrix), 1, True)
-    maximum = maxima[0][0]
-
-    estimated_mu = gi.estimate_mu(sf.matrix, maximum, sigma, radius)
-    print("Apex = (221.7, 46.9)")
-    print("Maximum =", Util.from_pix_to_wcs((maximum[1], maximum[0]), sf.wcs))
-    print("Estimated Apex =", Util.from_pix_to_wcs((estimated_mu[1], estimated_mu[0]), sf.wcs))
-
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    for index in indexes:
+        sf = SourceFinder(skymaps[index - 1])
+        mat = cv.GaussianBlur(sf.matrix, Util.kernel_size(sigma), sigma)
+        maxima = Util.local_maxima(mat)
+        # print(maxima)
+        for i in range(0, len(maxima)):
+            mu = gi.estimate_mu(mat, maxima[i][0], sigma)
+            prefactor = gi.estimate_prefactor(mat, mu, sigma)
+            maxima[i] = (mu, prefactor * gi.gaussian(mu, mu, sigma))
+        # print(maxima)
+        # cv.imshow(skymaps[index - 1] + str(index), Util.flip_mat(mat))
+        Util.sort_list(maxima, 1, True)
+        print(skymaps[index - 1], maxima)
+        plt.plot(Util.project_list(maxima, 1), label=''+str(index))
+        plt.legend()
+        # cv.waitKey(0)
+        # cv.destroyAllWindows()
 
 
 # main
 
 # test main
-# for i in range(0, 10):
-#     main2([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], 0.5*i + 0.01)
+# for s in range(1, 4):
+#     main2([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], 0.5*s + 0.01)
 #     plt.figure()
 # plt.show()
-
-test_gaussian_interpolator()
 
