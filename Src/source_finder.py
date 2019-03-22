@@ -89,21 +89,24 @@ def test_gaussian_interpolator():
     index = 1
     sf = SourceFinder(skymaps[index - 1])
 
-    mu = (104.5, 125.3)
-    sigma = 3
+    # mu = (-5, 125.3)
+    sigma = 5
+    radius = 2
 
-    for i in range(0, 200):
-        for j in range(0, 200):
-            sf.matrix[i][j] = gi.gaussian((i, j), mu, sigma)
+    # for i in range(0, 200):
+    #     for j in range(0, 200):
+    #         sf.matrix[i][j] = gi.gaussian((i, j), mu, sigma)
 
-    cv.imshow("gaussian", sf.matrix * 1/(np.amax(sf.matrix)))
+    sf.matrix = cv.GaussianBlur(sf.matrix, Util.kernel_size(sigma), sigma)
+    cv.imshow("img", sf.matrix * 1/(np.amax(sf.matrix)))
 
-    maximum = Util.sort_list(Util.local_maxima(sf.matrix), 1, True)[0][0]
+    maxima = Util.sort_list(Util.local_maxima(sf.matrix), 1, True)
+    maximum = maxima[0][0]
 
-    estimated_mu = gi.estimate_mu(sf.matrix, maximum, sigma, 10)
-    print("Apex = ", mu)
-    print("Maximum =", maximum)
-    print("Estimated Apex =", estimated_mu)
+    estimated_mu = gi.estimate_mu(sf.matrix, maximum, sigma, radius)
+    print("Apex = (221.7, 46.9)")
+    print("Maximum =", Util.from_pix_to_wcs((maximum[1], maximum[0]), sf.wcs))
+    print("Estimated Apex =", Util.from_pix_to_wcs((estimated_mu[1], estimated_mu[0]), sf.wcs))
 
     cv.waitKey(0)
     cv.destroyAllWindows()
