@@ -23,13 +23,29 @@ class SourceFinder:
         # print("pos", Util.project_list(maxima, 0))
         # print("val", Util.project_list(maxima, 1))
 
-        threshold = 0
+        threshold = 0.1
 
         if maxima[0][1] - maxima[1][1] > threshold:
             x, y = Util.from_pix_to_wcs((maxima[0][0][1], maxima[0][0][0]), self.wcs)
             print("Step:", step, "-", maxima[0][0], x, y)
         else:
-            print("Step:", step, "- No source found.")
+            result = []
+            test = []
+            for maximum in maxima[:20]:
+                # print(maximum)
+                neighbours = Util.neigh8_radius(maximum[0], 3)
+                sum = 0
+                # print(neighbours)
+                for maximum_0 in maxima_0:
+                    if maximum_0[0] in neighbours:
+                        test.append(maximum_0)
+                        sum += maximum_0[1]
+                        # print(maximum_0[0])
+                if test:
+                    result.append((maximum, sum))
+                test = []
+            print(Util.sort_list(result, 1, True))
+            # print("Step:", step, "- No source found.")
 
     def source_pixels(self, sigma_min=1.0, sigma_step=0.5, steps=10):
         """Search the source pixels position in the image"""
