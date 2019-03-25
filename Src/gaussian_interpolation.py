@@ -33,7 +33,6 @@ class GInterpolation:
         else:
             return mat[nearest_x][nearest_y]
 
-
     @staticmethod
     def estimate_mu(mat, maximum, sigma, radius=2):
         if radius <= 0:

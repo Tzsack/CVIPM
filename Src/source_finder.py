@@ -1,11 +1,13 @@
-import cv2 as cv
-from util import Util
-from gaussian_interpolation import GInterpolation as gi
-from astropy.wcs import WCS
-import matplotlib.pyplot as plt
-import numpy as np
-import os
 import math
+import os
+
+import cv2 as cv
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from astropy.wcs import WCS
+
+from gaussian_interpolation import GInterpolation as gi
+from util import Util
 
 
 class SourceFinder:
@@ -20,6 +22,8 @@ class SourceFinder:
         sigma = 0
         smoothed = None
 
+        data = []
+
         for i in range(0, steps):
             if i == 0:
                 smoothed = cv.GaussianBlur(self.matrix, Util.kernel_size(sigma_min), sigma_min)
@@ -32,28 +36,77 @@ class SourceFinder:
                 maxima = gi.optimize_maxima(smoothed, maxima, sigma)
             maxima = Util.sort_list(maxima, 1, True)
 
-            print(sigma)
+            last_max = 3
+            last_d = 2
+            dist_thresh = 4
 
-            q = 20
-            last_d = 5
-            score = []
-
-            for maximum_a in maxima[:q]:
+            for maximum_a in maxima[:last_max]:
                 distances = []
                 for maximum_b in maxima:
                     distances.append(Util.distance_eu(maximum_a[0], maximum_b[0]))
                 distances.sort(reverse=False)
-                s = 0
+                isolatedness = 0
                 for d in distances[1:last_d]:
-                    s += d
-                score.append(s)
-            print(maxima[:q])
-            print(score[:q])
-            plt.plot(score[:q], label=str(sigma))
+                    isolatedness += d
+
+                # data matrix construction
+
+                found = False
+                for max_id in range(0, len(data)):
+                    if Util.distance_eu(maximum_a[0], data[max_id][0]) <= dist_thresh:
+                        data[max_id][i + 1] = round(isolatedness, 2)
+                        data[max_id][0] = maximum_a[0]
+                        found = True
+                if not found:
+                    data.append([maximum_a[0]])
+                    for j in range(0, steps):
+                        data[-1].append(float(0))
+                    data[-1][i + 1] = round(isolatedness, 2)
+
+        k = 1 + 1/3
+        candidates = []
+        votes = []
+
+        for col in range(1, steps + 1):
+            values = Util.project_list(data, col)
+            first = values.index(max(values))
+            values.remove(values[first])
+            second = values.index(max(values))
+            if first >= second * k:
+                if candidates.count(data[first][0]) == 0:
+                    candidates.append(data[first][0])
+                    votes.append(1)
+                else:
+                    votes[candidates.index(data[first][0])] += 1
+
+        if candidates:
+            print(str(candidates[votes.index(max(votes))]))
+        else:
+            print("No source found.")
+
+        for row in data:
+            print(*row, sep="\t")
+            plt.plot(row[1:-1], label=str(row[0]))
             plt.legend()
+
         plt.figure()
 
         return 0, 0
+
+
+"""
+                    SIGMA
+            1   2   3   4   5   6 ...
+ M (x, y)   10  11
+ A (x, y) 
+ X ...
+ I 
+ M 
+ A
+ 
+ I
+ D
+"""
 
 
 def main(index):
@@ -104,15 +157,20 @@ def main2(indexes, sigma):
 
 
 # main
-main(7)
+
+main(1)
+# main(2)
+# main(3)
+# main(4)
+# main(5)
+# main(6)
+# main(7)
 main(8)
 main(9)
 main(10)
 main(11)
 main(12)
 main(13)
-# main(8)
-# main(13)
 plt.show()
 # test main
 # for s in range(1, 4):
