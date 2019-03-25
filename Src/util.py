@@ -1,5 +1,6 @@
 import numpy as np
 from astropy.io import fits
+import math
 
 
 class Util:
@@ -31,6 +32,10 @@ class Util:
             return size, size
         else:
             return 5, 5
+
+    @staticmethod
+    def distance_eu(a, b):
+        return math.sqrt(pow(a[0] - b[0], 2) + pow(a[1] - b[1], 2))
 
     @staticmethod
     def distance4(a, b):

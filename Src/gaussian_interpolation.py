@@ -27,7 +27,12 @@ class GInterpolation:
             nearest_y = 0
         elif mu[1] >= len(mat[0]) - 1:
             nearest_y = len(mat[0]) - 1
-        return mat[nearest_x][nearest_y] / GInterpolation.gaussian((nearest_x, nearest_y), mu, sigma)
+        z = GInterpolation.gaussian((nearest_x, nearest_y), mu, sigma)
+        if z > 0:
+            return mat[nearest_x][nearest_y] / z
+        else:
+            return mat[nearest_x][nearest_y]
+
 
     @staticmethod
     def estimate_mu(mat, maximum, sigma, radius=2):
@@ -62,3 +67,12 @@ class GInterpolation:
             mu_x /= radius - skipped
             mu_y /= radius - skipped
         return mu_x, mu_y
+
+    @staticmethod
+    def optimize_maxima(mat, maxima, sigma):
+        result = []
+        for i in range(0, len(maxima)):
+            mu = GInterpolation.estimate_mu(mat, maxima[i][0], sigma)
+            prefactor = GInterpolation.estimate_prefactor(mat, mu, sigma)
+            result.append((mu, prefactor * GInterpolation.gaussian(mu, mu, sigma)))
+        return result
