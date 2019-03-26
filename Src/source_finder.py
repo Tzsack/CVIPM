@@ -8,6 +8,7 @@ from astropy.wcs import WCS
 
 from gaussian_interpolation import GInterpolation as gi
 from util import Util
+import numpy as np
 
 
 class SourceFinder:
@@ -17,24 +18,46 @@ class SourceFinder:
         self.matrix = Util.from_fits_to_mat(fits_file_name)
         self.wcs = WCS(fits_file_name)
 
-    def source_pixels(self, sigma_min=1.0, sigma_step=0.5, steps=10):
+    def source_pixels(self, sigmas):
         """Search the source pixels position in the image"""
-        sigma = 0
-        smoothed = None
 
+        smoothed = None
+        last_sigma = 0
         data = []
 
-        for i in range(0, steps):
-            if i == 0:
-                smoothed = cv.GaussianBlur(self.matrix, Util.kernel_size(sigma_min), sigma_min)
-                sigma = sigma_min
+        for step in range(0, len(sigmas)):
+            sigma = sigmas[step]
+            if last_sigma == 0 or sigma <= last_sigma:
+                smoothed = cv.GaussianBlur(self.matrix, Util.kernel_size(sigma), sigma)
+                last_sigma = sigma
             else:
-                smoothed = cv.GaussianBlur(smoothed, Util.kernel_size(sigma_step), sigma_step)
-                sigma = math.sqrt(pow(sigma, 2) + pow(sigma_step, 2))
+                sigma_to_add = math.sqrt(pow(sigma, 2) - pow(last_sigma, 2))
+                smoothed = cv.GaussianBlur(smoothed, Util.kernel_size(sigma_to_add), sigma_to_add)
+                last_sigma = sigma
             maxima = Util.local_maxima(smoothed)
             if sigma >= 0.5:
                 maxima = gi.optimize_maxima(smoothed, maxima, sigma)
             maxima = Util.sort_list(maxima, 1, True)
+
+            # Trying to create a synthetic version of the image with less background noise
+
+            # cv.imshow(str(round(sigma, 2)), smoothed * 1/np.max(smoothed))
+
+            # dist_threshold = 5
+
+            # out = np.copy(smoothed)
+            # for x in range(0, len(out)):
+            #     print(x)
+            #     for y in range(0, len(out[x])):
+            #         out[x][y] = 0
+            #         for m in maxima:
+            #             out[x][y] += m[1] * gi.gaussian((x, y), m[0], sigma)
+            #
+            # cv.imshow("max " + str(round(sigma, 2)), out * 1/np.max(out))
+
+
+            # Construction of a data matrix containing for each local maximum the corrispondig values of isolatedness
+            # for increasing values of sigma
 
             last_max = 3
             last_d = 2
@@ -54,39 +77,18 @@ class SourceFinder:
                 found = False
                 for max_id in range(0, len(data)):
                     if Util.distance_eu(maximum_a[0], data[max_id][0]) <= dist_thresh:
-                        data[max_id][i + 1] = round(isolatedness, 2)
+                        data[max_id][step + 1] = round(maximum_a[1], 2)
                         data[max_id][0] = maximum_a[0]
                         found = True
                 if not found:
                     data.append([maximum_a[0]])
-                    for j in range(0, steps):
+                    for j in range(0, len(sigmas)):
                         data[-1].append(float(0))
-                    data[-1][i + 1] = round(isolatedness, 2)
-
-        k = 1 + 1/3
-        candidates = []
-        votes = []
-
-        for col in range(1, steps + 1):
-            values = Util.project_list(data, col)
-            first = values.index(max(values))
-            values.remove(values[first])
-            second = values.index(max(values))
-            if first >= second * k:
-                if candidates.count(data[first][0]) == 0:
-                    candidates.append(data[first][0])
-                    votes.append(1)
-                else:
-                    votes[candidates.index(data[first][0])] += 1
-
-        if candidates:
-            print(str(candidates[votes.index(max(votes))]))
-        else:
-            print("No source found.")
+                    data[-1][step + 1] = round(maximum_a[1], 2)
 
         for row in data:
             print(*row, sep="\t")
-            plt.plot(row[1:-1], label=str(row[0]))
+            plt.plot(row[1:], label=str(int(row[0][0]))+", "+str(int(row[0][1])))
             plt.legend()
 
         plt.figure()
@@ -117,14 +119,12 @@ def main(index):
     index -= 1
     sf = SourceFinder(skymaps[index])
     print(skymaps[index])
-    pixels_coord = sf.source_pixels(1, 1, 10)
+    pixels_coord = sf.source_pixels([2, 3, 4, 5, 6, 7, 8, 9, 10])
     # print(pixels_coord)
     #lon, lat = Util.from_pix_to_wcs(pixels_coord, sf.wcs)
     #print(lon, lat)
     #plt.show()
     os.chdir(curdir)
-    # cv.waitKey(0)
-    # cv.destroyAllWindows()
 
 
 def main2(indexes, sigma):
@@ -158,20 +158,22 @@ def main2(indexes, sigma):
 
 # main
 
-main(1)
-# main(2)
-# main(3)
-# main(4)
-# main(5)
-# main(6)
-# main(7)
-main(8)
-main(9)
-main(10)
-main(11)
-main(12)
-main(13)
+main(1)   # 145, 76
+main(2)   # 150, 117
+main(3)   # 86,  62
+main(4)   # 116, 73
+main(5)   # 121, 112
+main(6)   # 155, 84
+main(7)   # 142, 97
+main(8)   # 91, 131
+main(9)   # 97, 93
+main(10)  # 86, 121 (?)
+main(11)  # 115, 80 (?)
+main(12)  # 70, 107 (?)
+main(13)  # Nowhere
 plt.show()
+# cv.waitKey(0)
+# cv.destroyAllWindows()
 # test main
 # for s in range(1, 4):
 #     main2([4, 5, 6, 7, 8, 9, 10, 11, 12, 13], 1*s + 0.5)
