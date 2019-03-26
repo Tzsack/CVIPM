@@ -77,18 +77,46 @@ class SourceFinder:
                 found = False
                 for max_id in range(0, len(data)):
                     if Util.distance_eu(maximum_a[0], data[max_id][0]) <= dist_thresh:
-                        data[max_id][step + 1] = round(maximum_a[1], 2)
+                        data[max_id][step + 2] = round(isolatedness, 2)
                         data[max_id][0] = maximum_a[0]
                         found = True
                 if not found:
                     data.append([maximum_a[0]])
+                    data[-1].append(maximum_a[0])
                     for j in range(0, len(sigmas)):
                         data[-1].append(float(0))
-                    data[-1][step + 1] = round(maximum_a[1], 2)
+                    data[-1][step + 2] = round(isolatedness, 2)
+
+        candidates = []
+        votes = []
+        k = 1.5
+        quorum = 3/10
+        total_votes = 0
+
+        for step in range(0, len(sigmas)):
+            values = Util.project_list(data, step + 2)
+            sorted_values = sorted(values, reverse=True)
+            if sorted_values[0] >= sorted_values[1] * k:
+                if candidates.count(data[values.index(sorted_values[0])][1]) == 0:
+                    candidates.append(data[values.index(sorted_values[0])][1])
+                    votes.append(1)
+                else:
+                    votes[candidates.index(data[values.index(sorted_values[0])][1])] += 1
+                total_votes += 1
+
+        sorted_votes = sorted(votes, reverse=True)
+
+        print(candidates)
+        print(votes)
+
+        if sorted_votes[0] >= len(sigmas) * quorum:
+            print(candidates[votes.index(sorted_votes[0])])
+        else:
+            print("No source")
 
         for row in data:
             print(*row, sep="\t")
-            plt.plot(row[1:], label=str(int(row[0][0]))+", "+str(int(row[0][1])))
+            plt.plot(sigmas, row[2:], label=str(int(row[0][0]))+", "+str(int(row[0][1])))
             plt.legend()
 
         plt.figure()
@@ -119,7 +147,7 @@ def main(index):
     index -= 1
     sf = SourceFinder(skymaps[index])
     print(skymaps[index])
-    pixels_coord = sf.source_pixels([2, 3, 4, 5, 6, 7, 8, 9, 10])
+    pixels_coord = sf.source_pixels([2, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3])
     # print(pixels_coord)
     #lon, lat = Util.from_pix_to_wcs(pixels_coord, sf.wcs)
     #print(lon, lat)
@@ -158,13 +186,13 @@ def main2(indexes, sigma):
 
 # main
 
-main(1)   # 145, 76
-main(2)   # 150, 117
-main(3)   # 86,  62
-main(4)   # 116, 73
-main(5)   # 121, 112
-main(6)   # 155, 84
-main(7)   # 142, 97
+# main(1)   # 145, 76
+# main(2)   # 150, 117
+# main(3)   # 86,  62
+# main(4)   # 116, 73
+# main(5)   # 121, 112
+# main(6)   # 155, 84
+# main(7)   # 142, 97
 main(8)   # 91, 131
 main(9)   # 97, 93
 main(10)  # 86, 121 (?)
