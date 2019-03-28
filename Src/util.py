@@ -1,6 +1,7 @@
 import numpy as np
 from astropy.io import fits
 import math
+import json
 
 
 class Util:
@@ -110,3 +111,27 @@ class Util:
     def sort_list(l, pos, reverse=False):
         l.sort(key=lambda x: x[pos], reverse=reverse)
         return l
+
+    @staticmethod
+    def read_list_from_json_file(file_name):
+        """Return list of dictionaries from json file file_name"""
+        with open(file_name) as f:
+            return json.load(f)
+
+    @staticmethod
+    def json_beautifier(json_data):
+        """Return json_data in a beautified output"""
+        return json.dumps(json.loads(json_data), indent=4, sort_keys=False)
+
+    @staticmethod
+    def from_list_to_json(a_list):
+        """Return json of a_list"""
+        return json.dumps(a_list)
+
+    @staticmethod
+    def write_list_to_json_file(a_list, file_name):
+        """Save a_list in json beautified format in the file file_name"""
+        beauty_output = Util.json_beautifier(Util.from_list_to_json(a_list))
+        text_file = open(file_name, "w")
+        text_file.write("%s" % beauty_output)
+        text_file.close()

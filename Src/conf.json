@@ -1,0 +1,15 @@
+[
+    {
+        "dir": "../Skymaps",
+        "sigma_array": [
+            2.3,
+            2.5,
+            2.7
+        ],
+        "maxima_per_iter": 3,
+        "furthest_index": 2,
+        "dist_thresh": 4,
+        "k": 1.5,
+        "quorum": 0.3
+    }
+]

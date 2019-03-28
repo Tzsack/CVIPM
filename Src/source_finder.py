@@ -13,21 +13,38 @@ import numpy as np
 
 class SourceFinder:
 
-    def __init__(self, fits_file_name):
+    def __init__(self, conf_file_name):
         """Constructor"""
-        self.matrix = Util.from_fits_to_mat(fits_file_name)
-        self.wcs = WCS(fits_file_name)
+        self.parameters = Util.read_list_from_json_file(conf_file_name)[0]
+        self.matrix = None
 
-    @staticmethod
-    def best_candidate(isolatedness_values, k=1.5, quorum=0.3):
+    def start(self):
+        skymaps_dir = self.parameters['dir']
+        cur_dir = os.getcwd()
+        os.chdir(skymaps_dir)
+        for skymap in sorted(os.listdir('.')):
+            print(skymap)
+            self.matrix = Util.from_fits_to_mat(skymap)
+            isolatedness_values = self.compute_isolatedness()
+            src_pix_pos = self.best_candidate(isolatedness_values)
+            if src_pix_pos:
+                src_eq_pos = Util.from_pix_to_wcs(src_pix_pos, WCS(skymap))
+                print(src_eq_pos[0], src_eq_pos[1])
+            else:
+                print("No source found")
+        os.chdir(cur_dir)
+
+    def best_candidate(self, isolatedness_values):
         candidates = []
         votes = []
         total_votes = 0
 
         for step in range(0, len(isolatedness_values[0]) - 2):
             values = Util.project_list(isolatedness_values, step + 2)
+            if len(values) < 2:
+                return None
             sorted_values = sorted(values, reverse=True)
-            if sorted_values[0] >= sorted_values[1] * k:
+            if sorted_values[0] >= sorted_values[1] * self.parameters['k']:
                 if candidates.count(isolatedness_values[values.index(sorted_values[0])][1]) == 0:
                     candidates.append(isolatedness_values[values.index(sorted_values[0])][1])
                     votes.append(1)
@@ -38,21 +55,22 @@ class SourceFinder:
         if not votes:
             return None
 
+        # print(votes)
         sorted_votes = sorted(votes, reverse=True)
-        if sorted_votes[0] >= (len(isolatedness_values[0]) - 2) * quorum:
+        if sorted_votes[0] >= (len(isolatedness_values[0]) - 2) * self.parameters['quorum']:
             return candidates[votes.index(sorted_votes[0])][1], candidates[votes.index(sorted_votes[0])][0]
         else:
             return None
 
-    def compute_isolatedness(self, sigmas, maxima_per_iter=3, furthest_index=2, dist_thresh=4):
+    def compute_isolatedness(self):
         """Search the source pixels position in the image"""
 
         smoothed = None
         last_sigma = 0
         data = []
 
-        for step in range(0, len(sigmas)):
-            sigma = sigmas[step]
+        for step in range(0, len(self.parameters['sigma_array'])):
+            sigma = self.parameters['sigma_array'][step]
             if last_sigma == 0 or sigma <= last_sigma:
                 smoothed = cv.GaussianBlur(self.matrix, Util.kernel_size(sigma), sigma)
             else:
@@ -64,93 +82,43 @@ class SourceFinder:
                 maxima = gi.optimize_maxima(smoothed, maxima, sigma)
             maxima = Util.sort_list(maxima, 1, True)
 
-            for maximum_a in maxima[:maxima_per_iter]:
+            for maximum_a in maxima[:self.parameters['maxima_per_iter']]:
                 distances = []
                 for maximum_b in maxima:
                     distances.append(Util.distance_eu(maximum_a[0], maximum_b[0]))
                 distances.sort()
                 isolatedness = 0
-                for d in distances[1:furthest_index]:
+                for d in distances[1:self.parameters['furthest_index']]:
                     isolatedness += d
 
                 found = False
                 for max_id in range(0, len(data)):
-                    if Util.distance_eu(maximum_a[0], data[max_id][0]) <= dist_thresh:
+                    if Util.distance_eu(maximum_a[0], data[max_id][0]) <= self.parameters['dist_thresh']:
                         data[max_id][step + 2] = round(isolatedness, 2)
                         data[max_id][0] = maximum_a[0]
                         found = True
                 if not found:
                     data.append([maximum_a[0]])
                     data[-1].append(maximum_a[0])
-                    for j in range(0, len(sigmas)):
+                    for j in range(0, len(self.parameters['sigma_array'])):
                         data[-1].append(float(0))
                     data[-1][step + 2] = round(isolatedness, 2)
 
-        """
-        for row in data:
-            print(*row, sep="\t")
-            plt.plot(sigmas, row[2:], label=str(int(row[0][0]))+", "+str(int(row[0][1])))
-            plt.legend()
-
-        plt.figure()
-        """
-
         return data
 
-"""
-                    SIGMA
-            1   2   3   4   5   6 ...
- M (x, y)   10  11
- A (x, y) 
- X ...
- I 
- M 
- A
- 
- I
- D
-"""
+    def visualize_data(self, data):
+        """Visualize data"""
+        for row in data:
+            print(*row, sep="\t")
+            plt.plot(self.parameters['sigma_array'], row[2:], label=str(int(row[0][0]))+", "+str(int(row[0][1])))
+            plt.legend()
+        plt.figure()
 
 
-def main(index):
-    curdir = os.getcwd()
-    os.chdir("../Skymaps")
-    skymaps = os.listdir(".")
-    skymaps.sort()
-    index -= 1
-    sf = SourceFinder(skymaps[index])
-    print(skymaps[index])
-    isolatedness_values = sf.compute_isolatedness([2, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3])
-    pixels_coord = sf.best_candidate(isolatedness_values)
-    # print(pixels_coord)
-    if pixels_coord:
-        src_cor = np.round(Util.from_pix_to_wcs(pixels_coord, sf.wcs), 2)
-        print(src_cor[0], src_cor[1])
-    else:
-        print("No source found")
-    # plt.show()
-    os.chdir(curdir)
+def main():
+    sf = SourceFinder("conf.json")
+    sf.start()
+    # plt.show() # UNCOMMENT ONLY IF visualize_data IS USED
 
 
-# main
-main(1)   # 145, 76
-main(2)   # 150, 117
-main(3)   # 86,  62
-main(4)   # 116, 73
-main(5)   # 121, 112
-main(6)   # 155, 84
-main(7)   # 142, 97
-main(8)   # 91, 131
-main(9)   # 97, 93
-main(10)  # 86, 121 (?)
-main(11)  # 115, 80 (?)
-main(12)  # 70, 107 (?)
-main(13)  # Nowhere
-plt.show()
-# cv.waitKey(0)
-# cv.destroyAllWindows()
-# test main
-# for s in range(1, 4):
-#     main2([4, 5, 6, 7, 8, 9, 10, 11, 12, 13], 1*s + 0.5)
-#     plt.figure()
-# plt.show()
+main()
