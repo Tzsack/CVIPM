@@ -4,11 +4,9 @@ import random
 import math
 import xml.etree.ElementTree as Et
 from source_finder import SourceFinder
-# import gammalib
+import gammalib
 import ctools
-# import cscripts
-
-# test
+import cscripts
 
 
 def random_coords(ra, dec):
@@ -45,27 +43,40 @@ def update_xml_file(file_name, flow, coords):
     tree.write(file_name)
 
 
-def generate_events(i, coords):
+def generate_events(i):
     sim = ctools.ctobssim()
-    sim['inmodel'] = 'Models/sigma4_'+str(i)+'.xml'
-    sim['outevents'] = 'Events/'+str(i)+'.fits'
-    sim['caldb'] = 'prod2'
-    sim['irf'] = 'South_0.5h'
-    sim['ra'] = coords[0]
-    sim['dec'] = coords[1]
+    sim['ra'] = 221
+    sim['dec'] = 46
     sim['rad'] = 5.0
     sim['tmin'] = '2020-01-01T00:00:00'
     sim['tmax'] = '2020-01-01T00:15:00'
     sim['emin'] = 0.1
     sim['emax'] = 100.0
+    sim['caldb'] = 'prod2'
+    sim['irf'] = 'South_0.5h'
+    sim['inmodel'] = 'Models/sigma4_'+str(i)+'.xml'
+    sim['outevents'] = 'Events/'+str(i)+'.fits'
     sim.execute()
 
 
 def generate_skymap(i):
-    return
+    smap = ctools.ctskymap()
+    smap['inobs'] = 'Events/'+str(i)+'.fits'
+    smap['xref'] = 221
+    smap['yref'] = 46
+    smap['proj'] = 'CAR'
+    smap['coordsys'] = 'CEL'
+    smap['binsz'] = 0.02
+    smap['nxpix'] = 200
+    smap['nypix'] = 200
+    smap['emin'] = 0.1
+    smap['emax'] = 100
+    smap['bkgsubtract'] = 'NONE'
+    smap['outmap'] = 'Skymaps/' + str(i) + '.fits'
+    smap.execute()
 
 
-def source_finder_tests(flow=3, n=1):
+def source_finder_tests(flow=2, n=10):
     os.chdir("../../Tests")
     shutil.rmtree("Models")
     shutil.rmtree("Events")
@@ -77,21 +88,20 @@ def source_finder_tests(flow=3, n=1):
     true_coords = []
 
     for i in range(0, n):
-        coords = random_coords(221.0, 46.0)
+        coords = random_coords(221, 46)
         true_coords.append(coords)
         shutil.copy("default.xml", "Models/sigma4_"+str(i)+".xml")
         update_xml_file("Models/sigma4_"+str(i)+".xml", flow, coords)
-        generate_events(i, coords)
+        generate_events(i)
         generate_skymap(i)
 
-    sf = SourceFinder("../Src/conf.json")
+    os.chdir("../Src/tests")
+    sf = SourceFinder("conf.json")
     computed_coords = sf.compute_coords()
 
     print(true_coords)
     print(computed_coords)
 
-    os.chdir("../Src/tests")
 
-
-source_finder_tests()
+source_finder_tests(n=1)
 

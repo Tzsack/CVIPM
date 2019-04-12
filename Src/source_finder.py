@@ -24,14 +24,14 @@ class SourceFinder:
         os.chdir(skymaps_dir)
         coords = []
         for skymap in sorted(os.listdir('.')):
-            print(skymap)
+            # print(skymap)
             self.matrix = Util.from_fits_to_mat(skymap)
             isolatedness_values = self.compute_isolatedness()
             src_pix_pos = self.best_candidate(isolatedness_values)
             if src_pix_pos:
                 src_eq_pos = Util.from_pix_to_wcs(src_pix_pos, WCS(skymap))
                 # print(src_eq_pos[0], src_eq_pos[1])
-                coords.append(src_eq_pos)
+                coords.append((float(src_eq_pos[0]), float(src_eq_pos[1])))
             else:
                 # print("No source found")
                 coords.append(None)
