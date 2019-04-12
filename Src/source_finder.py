@@ -18,10 +18,11 @@ class SourceFinder:
         self.parameters = Util.read_list_from_json_file(conf_file_name)[0]
         self.matrix = None
 
-    def start(self):
+    def compute_coords(self):
         skymaps_dir = self.parameters['dir']
         cur_dir = os.getcwd()
         os.chdir(skymaps_dir)
+        coords = []
         for skymap in sorted(os.listdir('.')):
             print(skymap)
             self.matrix = Util.from_fits_to_mat(skymap)
@@ -29,10 +30,13 @@ class SourceFinder:
             src_pix_pos = self.best_candidate(isolatedness_values)
             if src_pix_pos:
                 src_eq_pos = Util.from_pix_to_wcs(src_pix_pos, WCS(skymap))
-                print(src_eq_pos[0], src_eq_pos[1])
+                # print(src_eq_pos[0], src_eq_pos[1])
+                coords.append(src_eq_pos)
             else:
-                print("No source found")
+                # print("No source found")
+                coords.append(None)
         os.chdir(cur_dir)
+        return coords
 
     def best_candidate(self, isolatedness_values):
         candidates = []
@@ -117,8 +121,9 @@ class SourceFinder:
 
 def main():
     sf = SourceFinder("conf.json")
-    sf.start()
+    coords = sf.compute_coords()
+    print(coords)
     # plt.show() # UNCOMMENT ONLY IF visualize_data IS USED
 
 
-main()
+# main()
