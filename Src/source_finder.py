@@ -24,9 +24,12 @@ class SourceFinder:
         os.chdir(skymaps_dir)
         coords = []
         for skymap in sorted(os.listdir('.')):
-            # print(skymap)
+            if skymap == "computed_coordinates.json":
+                continue
+            print(skymap)
             self.matrix = Util.from_fits_to_mat(skymap)
             isolatedness_values = self.compute_isolatedness()
+            self.visualize_data(isolatedness_values)
             src_pix_pos = self.best_candidate(isolatedness_values)
             if src_pix_pos:
                 src_eq_pos = Util.from_pix_to_wcs(src_pix_pos, WCS(skymap))
@@ -35,6 +38,7 @@ class SourceFinder:
             else:
                 # print("No source found")
                 coords.append(None)
+        Util.write_list_to_json_file(coords, "computed_coordinates.json")
         os.chdir(cur_dir)
         return coords
 
@@ -123,7 +127,7 @@ def main():
     sf = SourceFinder("conf.json")
     coords = sf.compute_coords()
     print(coords)
-    # plt.show() # UNCOMMENT ONLY IF visualize_data IS USED
+    plt.show()  # UNCOMMENT ONLY IF visualize_data IS USED
 
 
 # main()

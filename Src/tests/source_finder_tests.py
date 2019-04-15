@@ -7,34 +7,20 @@ from source_finder import SourceFinder
 import gammalib
 import ctools
 import cscripts
+import matplotlib.pyplot as plt
+import numpy as np
+from util import Util
 
 
-def random_coords(ra, dec):
+def random_coords(center):
     module = random.uniform(0, 1)
     angle = random.uniform(0, 2 * math.pi)
-    ra += math.cos(angle) * module
-    dec += math.sin(angle) * module
-    return ra, dec
+    x = center[0] + math.cos(angle) * module
+    y = center[1] + math.sin(angle) * module
+    return x, y
 
 
 def update_xml_file(file_name, flow, coords):
-    # content = '<?xml version = "1.0" standalone = "no"?> <source_library title = "source library">' +\
-    #     ' < source name = "Crab" type = "PointSource" > < spectrum type = "PowerLaw" >' +\
-    #     ' < parameter name = "Prefactor" scale = "1e-17" value = "'
-    # content += str(flow)
-    # content += '" min="1e-07" max="1000.0" free="1"/> <parameter name="Index" scale="-1" value="2.48" min="0.0"' +\
-    #     ' max="+5.0" free="1"/> <parameter name="PivotEnergy" scale="1e6" value="0.3" min="0.01" max="1000.0"' +\
-    #     ' free="0"/> </spectrum> <spatialModel type="PointSource"> <parameter name="RA" scale="1.0" value="'
-    # content += str(coords[0])
-    # content += '" min="-360" max="360" free="0"/> < parameter name = "DEC" scale = "1.0" value = "'
-    # content += str(coords[1])
-    # content += '" min="-90"  max="90"  free="0"/> </spatialModel> </source> <source name="CTABackgroundModel" ' +\
-    #     'type="CTAIrfBackground" instrument="CTA"> <spectrum type="PowerLaw"> <parameter name="Prefactor" ' +\
-    #     'scale="1.0" value="1.0" min="1e-3" max="1e+3" free="1"/> <parameter name="Index" scale="1.0" value="0.0" ' +\
-    #     'min="-5.0" max="+5.0"   free="1"/> <parameter name="PivotEnergy" scale="1e6"  value="1.0"  min="0.01" '+\
-    #     'max="1000.0" free="0"/> </spectrum> </source> </source_library>'
-    # with open(file_name, "w") as f:
-    #     f.write(content)
     tree = Et.parse(file_name)
     root = tree.getroot()
     root[0][0][0].attrib['value'] = str(flow)
@@ -57,6 +43,7 @@ def generate_events(i):
     sim['inmodel'] = 'Models/sigma4_'+str(i)+'.xml'
     sim['outevents'] = 'Events/'+str(i)+'.fits'
     sim.execute()
+    print("Generated Events/" + str(i) + ".fits")
 
 
 def generate_skymap(i):
@@ -74,34 +61,67 @@ def generate_skymap(i):
     smap['bkgsubtract'] = 'NONE'
     smap['outmap'] = 'Skymaps/' + str(i) + '.fits'
     smap.execute()
+    print("Generated Skymap/" + str(i) + ".fits")
 
 
-def source_finder_tests(flow=2, n=10):
-    os.chdir("../../Tests")
+def generate_xml_files(n, central_coords, flow):
+    os.chdir("../Tests")
     shutil.rmtree("Models")
-    shutil.rmtree("Events")
-    shutil.rmtree("Skymaps")
     os.mkdir("Models")
-    os.mkdir("Events")
-    os.mkdir("Skymaps")
 
     true_coords = []
 
     for i in range(0, n):
-        coords = random_coords(221, 46)
+        coords = random_coords(central_coords)
+        shutil.copy("default.xml", "Models/sigma4_" + str(i) + ".xml")
+        update_xml_file("Models/sigma4_" + str(i) + ".xml", flow, coords)
         true_coords.append(coords)
-        shutil.copy("default.xml", "Models/sigma4_"+str(i)+".xml")
-        update_xml_file("Models/sigma4_"+str(i)+".xml", flow, coords)
+        print("Generated Models/sigma4_" + str(i) + ".xml, with flow =", flow, "and coordinates =", coords)
+
+    Util.write_list_to_json_file(true_coords, "Models/coordinates.json")
+
+    os.chdir("../Src")
+    return true_coords
+
+
+def generate_skymaps():
+    os.chdir("../Tests")
+    shutil.rmtree("Events")
+    shutil.rmtree("Skymaps")
+    os.mkdir("Events")
+    os.mkdir("Skymaps")
+
+    for model in sorted(os.listdir('./Models')):
+        if model == "coordinates.json":
+            continue
+        i = int(model[0:-4].split('_')[1])
         generate_events(i)
         generate_skymap(i)
 
-    os.chdir("../Src/tests")
-    sf = SourceFinder("conf.json")
-    computed_coords = sf.compute_coords()
+    os.chdir("../Src")
 
+
+def generate_data(n, coords, flow):
+    generate_xml_files(n, coords, flow)
+    generate_skymaps()
+
+
+def source_finder_tests(flow=2, n=10):
+    os.chdir("../")
+    # generate_data(n, (221, 46), flow)
+    true_coords = Util.read_list_from_json_file("../Tests/Models/coordinates.json")
+    sf = SourceFinder("conf.json")
+    sf.compute_coords()
+    computed_coords = Util.read_list_from_json_file("../Tests/Skymaps/computed_coordinates.json")
     print(true_coords)
     print(computed_coords)
+    for i in range(0, n):
+        if computed_coords[i]:
+            print(i, Util.distance_eu(true_coords[i], computed_coords[i]))
+        else:
+            print(i, "None")
+    os.chdir("tests")
 
 
-source_finder_tests(n=1)
-
+source_finder_tests(n=100)
+# plt.show()

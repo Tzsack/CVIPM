@@ -1,9 +1,0 @@
-2019-04-12T11:36:17: ********************************************************************************
-2019-04-12T11:36:17: *                                   ctobssim                                   *
-2019-04-12T11:36:17: * ---------------------------------------------------------------------------- *
-2019-04-12T11:36:17: * Version: 1.5.2                                                               *
-2019-04-12T11:36:17: ********************************************************************************
-2019-04-12T11:36:20: *** ERROR encounterted in the execution of ctobssim. Run aborted ...
-2019-04-12T11:36:20: *** ERROR in GCaldb::path(std::string&, std::string&): Directory "/data/cta" not found. Requested mission "CTA" not found in calibration database.
-2019-04-12T11:36:20: 
-2019-04-12T11:36:20: Application "ctobssim" terminated after 3 wall clock seconds, consuming 0.01 seconds of CPU time.
