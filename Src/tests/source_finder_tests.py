@@ -3,12 +3,17 @@ import shutil
 import random
 import math
 import xml.etree.ElementTree as Et
-from source_finder import SourceFinder
+
 import gammalib
 import ctools
 import cscripts
+
 import matplotlib.pyplot as plt
 import numpy as np
+
+import sys
+sys.path.append("..") # ADDED TO BE EXECUTED AS A SCRIPT
+from source_finder import SourceFinder
 from util import Util
 
 
@@ -125,16 +130,18 @@ def padded_number(n, max_n):
 
 def source_finder_tests(flow=2.0, n=10):
     os.chdir("../")
-    generate_data(n, (221, 46), flow)
+    # generate_data(n, (221, 46), flow)
     true_coords = Util.read_list_from_json_file("../Tests/Models/coordinates.json")
     sf = SourceFinder("conf.json")
-    sf.compute_coords()
+    # sf.compute_coords()
     computed_coords = Util.read_list_from_json_file("../Tests/Skymaps/computed_coordinates.json")
     print(true_coords)
     print(computed_coords)
     for i in range(0, n):
         if computed_coords[i] and true_coords[i]:
-            print(i, Util.distance_eu(true_coords[i], computed_coords[i]))
+            distance = Util.distance_eu(true_coords[i], computed_coords[i])
+            if distance <= 0.1:
+                print(i, distance)
         else:
             print(i, "None")
     os.chdir("tests")
