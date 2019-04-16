@@ -29,16 +29,15 @@ class SourceFinder:
             print(skymap)
             self.matrix = Util.from_fits_to_mat(skymap)
             isolatedness_values = self.compute_isolatedness()
-            self.visualize_data(isolatedness_values)
+            # self.visualize_data(isolatedness_values)  # UNCOMMENT TO SHOW GRAPHS
             src_pix_pos = self.best_candidate(isolatedness_values)
             if src_pix_pos:
                 src_eq_pos = Util.from_pix_to_wcs(src_pix_pos, WCS(skymap))
-                # print(src_eq_pos[0], src_eq_pos[1])
                 coords.append((float(src_eq_pos[0]), float(src_eq_pos[1])))
             else:
-                # print("No source found")
                 coords.append(None)
         Util.write_list_to_json_file(coords, "computed_coordinates.json")
+        # plt.show()  # UNCOMMENT TO SHOW GRAPHS
         os.chdir(cur_dir)
         return coords
 
@@ -127,7 +126,6 @@ def main():
     sf = SourceFinder("conf.json")
     coords = sf.compute_coords()
     print(coords)
-    plt.show()  # UNCOMMENT ONLY IF visualize_data IS USED
 
 
 # main()
