@@ -26,7 +26,7 @@ class SourceFinder:
         for skymap in sorted(os.listdir('.')):
             if skymap == "computed_coordinates.json":
                 continue
-            print(skymap)
+            # print(skymap)
             self.matrix = Util.from_fits_to_mat(skymap)
             isolatedness_values = self.compute_isolatedness()
             # self.visualize_data(isolatedness_values)  # UNCOMMENT TO SHOW GRAPHS
