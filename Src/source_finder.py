@@ -15,7 +15,7 @@ class SourceFinder:
 
     def __init__(self, conf_file_name):
         """Constructor"""
-        self.parameters = Util.read_list_from_json_file(conf_file_name)[0]
+        self.parameters = Util.read_list_from_json_file(conf_file_name)
         self.matrix = None
 
     def compute_coords(self):
@@ -24,18 +24,17 @@ class SourceFinder:
         os.chdir(skymaps_dir)
         coords = []
         for skymap in sorted(os.listdir('.')):
-            if skymap == "computed_coordinates.json":
-                continue
-            # print(skymap)
-            self.matrix = Util.from_fits_to_mat(skymap)
-            isolatedness_values = self.compute_isolatedness()
-            # self.visualize_data(isolatedness_values)  # UNCOMMENT TO SHOW GRAPHS
-            src_pix_pos = self.best_candidate(isolatedness_values)
-            if src_pix_pos:
-                src_eq_pos = Util.from_pix_to_wcs(src_pix_pos, WCS(skymap))
-                coords.append((float(src_eq_pos[0]), float(src_eq_pos[1])))
-            else:
-                coords.append(None)
+            if skymap.endswith('.fits'):
+                # print(skymap)
+                self.matrix = Util.from_fits_to_mat(skymap)
+                isolatedness_values = self.compute_isolatedness()
+                self.visualize_data(isolatedness_values)  # UNCOMMENT TO SHOW GRAPHS
+                src_pix_pos = self.best_candidate(isolatedness_values)
+                if src_pix_pos:
+                    src_eq_pos = Util.from_pix_to_wcs(src_pix_pos, WCS(skymap))
+                    coords.append((float(src_eq_pos[0]), float(src_eq_pos[1])))
+                else:
+                    coords.append(None)
         Util.write_list_to_json_file(coords, "computed_coordinates.json")
         # plt.show()  # UNCOMMENT TO SHOW GRAPHS
         os.chdir(cur_dir)
@@ -126,6 +125,7 @@ def main():
     sf = SourceFinder("conf.json")
     coords = sf.compute_coords()
     print(coords)
+    plt.show()
 
 
-# main()
+main()
