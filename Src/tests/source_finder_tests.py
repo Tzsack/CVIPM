@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import sys
-sys.path.append("..") # ADDED TO BE EXECUTED AS A SCRIPT
+
+sys.path.append("..")  # ADDED TO BE EXECUTED AS A SCRIPT
 from source_finder import SourceFinder
 from util import Util
 
@@ -81,7 +82,7 @@ def generate_events(inmodel, outevents, ra=221.0, dec=46.0, rad=5.0, tmin='2020-
     sim['outevents'] = outevents
     sim['seed'] = seed
     sim.execute()
-    print("Generated " + outevents)
+    print("Generated " + outevents + " using seed: " + str(seed))
 
 
 def generate_skymap(inobs, outmap, xref=221.0, yref=46.0, proj='CAR', coordsys='CEL', binsz=0.02,
@@ -103,28 +104,29 @@ def generate_skymap(inobs, outmap, xref=221.0, yref=46.0, proj='CAR', coordsys='
     print("Generated " + outmap)
 
 
-def generate_skymaps(n, models_dir, events_dir, skymaps_dir):
+def generate_skymaps(n, models_dir, events_dir, skymaps_dir, start_seed):
     """"""
+    seed = start_seed
     for model in sorted(os.listdir(models_dir)):
         if model.endswith('.xml'):
             i = padded_number(int(model[0:-4].split('_')[1]), n)
             model_filename = models_dir + 'sigma4_' + i + '.xml'
             event_filename = events_dir + i + '.fits'
             skymap_filename = skymaps_dir + i + '.fits'
-            generate_events(inmodel=model_filename, outevents=event_filename)
+            generate_events(inmodel=model_filename, outevents=event_filename, seed=seed)
             generate_skymap(inobs=event_filename, outmap=skymap_filename)
+            seed += 1
 
 
-def generate_bkg_only_skymaps(n, bkg_model, events_dir, skymaps_dir):
-    seeds = list(range(0, n))
-    random.shuffle(seeds)
+def generate_bkg_only_skymaps(n, bkg_model, events_dir, skymaps_dir, start_seed):
+    seed = start_seed
     for i in range(0, n):
         num = padded_number(i, n)
         event_filename = events_dir + num + '.fits'
         skymap_filename = skymaps_dir + num + '.fits'
-        print(seeds[i])
-        generate_events(inmodel=bkg_model, outevents=event_filename, seed=seeds[i])
+        generate_events(inmodel=bkg_model, outevents=event_filename, seed=seed)
         generate_skymap(inobs=event_filename, outmap=skymap_filename)
+        seed += 1
 
 
 def generate_dirs():
@@ -137,16 +139,16 @@ def generate_dirs():
     return dirs
 
 
-def generate_data(flow, n, start_coords, radius, start_model):
+def generate_data(flow, n, start_coords, radius, start_model, start_seed):
     """"""
     os.chdir("../Tests")
     dirs = generate_dirs()
     if start_model != 'background_only.xml':
         generate_src_xml_files(flow, n, start_coords, radius, dirs['models'], start_model)
-        generate_skymaps(n, dirs['models'], dirs['events'], dirs['skymaps'])
+        generate_skymaps(n, dirs['models'], dirs['events'], dirs['skymaps'], start_seed)
 
     else:
-        generate_bkg_only_skymaps(n, start_model, dirs['events'], dirs['skymaps'])
+        generate_bkg_only_skymaps(n, start_model, dirs['events'], dirs['skymaps'], start_seed)
     os.chdir("../Src")
     return dirs
 
@@ -175,22 +177,23 @@ def analyse_data(dir_name, bkg_only=False):
     os.chdir("tests")
 
 
-def source_finder_tests(flow=2.0, n=10, start_coords=(221, 46), radius=1, start_model='default.xml'):
+def source_finder_tests(flow=2.0, n=10, start_coords=(221, 46), radius=1, start_model='default.xml', start_seed=1,
+                        generate=True):
     os.chdir("../")
-    dirs = generate_data(flow, n, start_coords, radius, start_model)
-    set_conf(dirs['skymaps'])
+    if generate:
+        dirs = generate_data(flow, n, start_coords, radius, start_model, start_seed)
+        set_conf(dirs['skymaps'])
     sf = SourceFinder('conf.json')
     sf.compute_coords()
     os.chdir("tests")
 
-    timestr = dirs['models'].split('/')[0]
+    timestr = Util.read_list_from_json_file('../conf.json')['dir'].split('/')[-3]
     if start_model != 'background_only.xml':
         analyse_data(timestr)
     else:
         analyse_data(timestr, bkg_only=True)
 
 
-# source_finder_tests(flow=2.0, n=2)
-source_finder_tests(n=5, start_model='background_only.xml')
-# analyse_data('20190417-153919')
-# analyse_data('20190417-154542', bkg_only=True)
+base_seed = random.randint(1, 1000000)
+source_finder_tests(n=5, start_seed=base_seed, generate=False)
+plt.show()

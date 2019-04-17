@@ -28,7 +28,7 @@ class SourceFinder:
                 # print(skymap)
                 self.matrix = Util.from_fits_to_mat(skymap)
                 isolatedness_values = self.compute_isolatedness()
-                self.visualize_data(isolatedness_values)  # UNCOMMENT TO SHOW GRAPHS
+                self.visualize_data(isolatedness_values, WCS(skymap))  # UNCOMMENT TO SHOW GRAPHS
                 src_pix_pos = self.best_candidate(isolatedness_values)
                 if src_pix_pos:
                     src_eq_pos = Util.from_pix_to_wcs(src_pix_pos, WCS(skymap))
@@ -112,11 +112,12 @@ class SourceFinder:
 
         return data
 
-    def visualize_data(self, data):
+    def visualize_data(self, data, wcs):
         """Visualize data"""
         for row in data:
             print(*row, sep="\t")
-            plt.plot(self.parameters['sigma_array'], row[2:], label=str(int(row[0][0]))+", "+str(int(row[0][1])))
+            eq = Util.from_pix_to_wcs((row[1][1], row[1][0]), wcs)
+            plt.plot(self.parameters['sigma_array'], row[2:], label=str(round(float(eq[0]), 2))+", "+str(round(float(eq[1]), 2)))
             plt.legend()
         plt.figure()
 
@@ -128,4 +129,4 @@ def main():
     plt.show()
 
 
-main()
+# main()
