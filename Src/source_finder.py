@@ -9,6 +9,8 @@ from astropy.wcs import WCS
 from gaussian_interpolation import GInterpolation as gi
 from util import Util
 import numpy as np
+from point_data import PointData
+from point_data import PointDataList
 
 
 class SourceFinder:
@@ -45,17 +47,17 @@ class SourceFinder:
         votes = []
         total_votes = 0
 
-        for step in range(0, len(isolatedness_values[0]) - 2):
-            values = Util.project_list(isolatedness_values, step + 2)
+        for step in range(0, len(isolatedness_values.points)):
+            values = isolatedness_values.project_list(step)
             if len(values) < 2:
                 return None
             sorted_values = sorted(values, reverse=True)
             if sorted_values[0] >= sorted_values[1] * self.parameters['k']:
-                if candidates.count(isolatedness_values[values.index(sorted_values[0])][1]) == 0:
-                    candidates.append(isolatedness_values[values.index(sorted_values[0])][1])
+                if candidates.count(isolatedness_values.points[values.index(sorted_values[0])].original) == 0:
+                    candidates.append(isolatedness_values.points[values.index(sorted_values[0])].original)
                     votes.append(1)
                 else:
-                    votes[candidates.index(isolatedness_values[values.index(sorted_values[0])][1])] += 1
+                    votes[candidates.index(isolatedness_values.points[values.index(sorted_values[0])].original)] += 1
                 total_votes += 1
 
         if not votes:
@@ -63,7 +65,7 @@ class SourceFinder:
 
         # print(votes)
         sorted_votes = sorted(votes, reverse=True)
-        if sorted_votes[0] >= (len(isolatedness_values[0]) - 2) * self.parameters['quorum']:
+        if sorted_votes[0] >= len(isolatedness_values.points[0].values) * self.parameters['quorum']:
             return candidates[votes.index(sorted_votes[0])][1], candidates[votes.index(sorted_votes[0])][0]
         else:
             return None
@@ -73,7 +75,7 @@ class SourceFinder:
 
         smoothed = None
         last_sigma = 0
-        data = []
+        data = PointDataList(self.parameters['dist_thresh'])
 
         for step in range(0, len(self.parameters['sigma_array'])):
             sigma = self.parameters['sigma_array'][step]
@@ -97,18 +99,7 @@ class SourceFinder:
                 for d in distances[1:self.parameters['furthest_index']]:
                     isolatedness += d
 
-                found = False
-                for max_id in range(0, len(data)):
-                    if Util.distance_eu(maximum_a[0], data[max_id][0]) <= self.parameters['dist_thresh']:
-                        data[max_id][step + 2] = round(isolatedness, 2)
-                        data[max_id][0] = maximum_a[0]
-                        found = True
-                if not found:
-                    data.append([maximum_a[0]])
-                    data[-1].append(maximum_a[0])
-                    for j in range(0, len(self.parameters['sigma_array'])):
-                        data[-1].append(float(0))
-                    data[-1][step + 2] = round(isolatedness, 2)
+                data.set(maximum_a, isolatedness, step)
 
         return data
 
