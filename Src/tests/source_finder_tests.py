@@ -195,5 +195,6 @@ def source_finder_tests(flow=2.0, n=10, start_coords=(221, 46), radius=1, start_
 
 
 base_seed = random.randint(1, 1000000)
-source_finder_tests(n=5, start_seed=base_seed, generate=False)
+# source_finder_tests(n=5, start_seed=base_seed, start_model='background_only.xml', generate=True)
+source_finder_tests(n=5, start_seed=base_seed, start_model='default.xml', generate=False, flow=1.0)
 plt.show()
