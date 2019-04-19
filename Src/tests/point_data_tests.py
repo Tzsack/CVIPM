@@ -19,6 +19,7 @@ def point_data_list_tests():
     pdl.set((82, 82), 123, 0)
     pdl.set((101, 99), 1234, 10)
     print(pdl.to_string())
+    print(pdl.to_list())
 
 
 point_data_list_tests()

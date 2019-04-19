@@ -10,6 +10,7 @@ import ctools
 import cscripts
 
 import matplotlib.pyplot as plt
+from astropy.wcs import WCS
 import numpy as np
 
 import sys
@@ -66,8 +67,8 @@ def generate_src_xml_files(flow, n, start_coords, radius, models_dir, start_mode
     return true_coords
 
 
-def generate_events(inmodel, outevents, ra=221.0, dec=46.0, rad=5.0, tmin='2020-01-01T00:00:00',
-                    tmax='2020-01-01T00:15:00', emin=0.1, emax=100.0, caldb='prod2', irf='South_0.5h', seed=1):
+def ctobssim(inmodel, outevents, ra=221.0, dec=46.0, rad=5.0, tmin='2020-01-01T00:00:00',
+             tmax='2020-01-01T00:15:00', emin=0.1, emax=100.0, caldb='prod2', irf='South_0.5h', seed=1):
     sim = ctools.ctobssim()
     sim['ra'] = ra
     sim['dec'] = dec
@@ -85,8 +86,8 @@ def generate_events(inmodel, outevents, ra=221.0, dec=46.0, rad=5.0, tmin='2020-
     print("Generated " + outevents + " using seed: " + str(seed))
 
 
-def generate_skymap(inobs, outmap, xref=221.0, yref=46.0, proj='CAR', coordsys='CEL', binsz=0.02,
-                    nxpix=200, nypix=200, emin=0.1, emax=100.0, bkgsubtract='NONE'):
+def ctskymap(inobs, outmap, xref=221.0, yref=46.0, proj='CAR', coordsys='CEL', binsz=0.02,
+             nxpix=200, nypix=200, emin=0.1, emax=100.0, bkgsubtract='NONE'):
     smap = ctools.ctskymap()
     smap['inobs'] = inobs
     smap['xref'] = xref
@@ -110,11 +111,11 @@ def generate_skymaps(n, models_dir, events_dir, skymaps_dir, start_seed):
     for model in sorted(os.listdir(models_dir)):
         if model.endswith('.xml'):
             i = padded_number(int(model[0:-4].split('_')[1]), n)
-            model_filename = models_dir + 'sigma4_' + i + '.xml'
-            event_filename = events_dir + i + '.fits'
+            model_filename = models_dir + model
+            events_filename = events_dir + i + '.fits'
             skymap_filename = skymaps_dir + i + '.fits'
-            generate_events(inmodel=model_filename, outevents=event_filename, seed=seed)
-            generate_skymap(inobs=event_filename, outmap=skymap_filename)
+            ctobssim(inmodel=model_filename, outevents=events_filename, seed=seed)
+            ctskymap(inobs=events_filename, outmap=skymap_filename)
             seed += 1
 
 
@@ -122,34 +123,43 @@ def generate_bkg_only_skymaps(n, bkg_model, events_dir, skymaps_dir, start_seed)
     seed = start_seed
     for i in range(0, n):
         num = padded_number(i, n)
-        event_filename = events_dir + num + '.fits'
+        events_filename = events_dir + num + '.fits'
         skymap_filename = skymaps_dir + num + '.fits'
-        generate_events(inmodel=bkg_model, outevents=event_filename, seed=seed)
-        generate_skymap(inobs=event_filename, outmap=skymap_filename)
+        ctobssim(inmodel=bkg_model, outevents=events_filename, seed=seed)
+        ctskymap(inobs=events_filename, outmap=skymap_filename)
         seed += 1
 
 
-def generate_dirs():
+def ctlike(inobs, inmodel, outmodel, caldb='prod2', irf='South_0.5h'):
     """"""
-    timestr = time.strftime("%Y%m%d-%H%M%S")
-    dirs = {'models': timestr + '/Models/', 'events': timestr + '/Events/',
-            'skymaps': timestr + '/Skymaps/'}
+    ctl = ctools.ctlike()
+    ctl['inobs'] = inobs
+    ctl['caldb'] = caldb
+    ctl['irf'] = irf
+    ctl['inmodel'] = inmodel
+    ctl['outmodel'] = outmodel
+    ctl.execute()
+    print("Generated " + outmodel)
+
+
+def generate_fit_results(n, models_dir, events_dir, fit_results_dir):
+    for model in sorted(os.listdir(models_dir)):
+        if model.endswith('.xml'):
+            i = padded_number(int(model[0:-4].split('_')[1]), n)
+            model_filename = models_dir + model
+            events_filename = events_dir + i + '.fits'
+            fit_results_filename = fit_results_dir + i + '.xml'
+            ctlike(inobs=events_filename, inmodel=model_filename, outmodel=fit_results_filename)
+
+
+def generate_dirs(timestr, bkg_only=False):
+    dirs = {'events': timestr + '/Events/',
+            'skymaps': timestr + '/Skymaps/',
+            'fit_results': timestr + '/FitResults/'}
+    if not bkg_only:
+        dirs['models'] = timestr + '/Models/'
     for d in dirs.values():
         os.makedirs(d)
-    return dirs
-
-
-def generate_data(flow, n, start_coords, radius, start_model, start_seed):
-    """"""
-    os.chdir("../Tests")
-    dirs = generate_dirs()
-    if start_model != 'background_only.xml':
-        generate_src_xml_files(flow, n, start_coords, radius, dirs['models'], start_model)
-        generate_skymaps(n, dirs['models'], dirs['events'], dirs['skymaps'], start_seed)
-
-    else:
-        generate_bkg_only_skymaps(n, start_model, dirs['events'], dirs['skymaps'], start_seed)
-    os.chdir("../Src")
     return dirs
 
 
@@ -159,42 +169,106 @@ def set_conf(skymaps_dir):
     Util.write_list_to_json_file(conf_params, 'conf.json')
 
 
-def analyse_data(dir_name, bkg_only=False):
-    os.chdir("../")
+def generate_src_data(start_model='default.xml', flow=2.0, n=10, start_coords=(221, 46), radius=1, start_seed=1):
+    os.chdir("../Tests")
+    timestr = time.strftime("%Y%m%d-%H%M%S_") + start_model.split('.')[0] + '_' + str(flow)
+    src_dirs = generate_dirs(timestr)
+    generate_src_xml_files(flow, n, start_coords, radius, src_dirs['models'], start_model)
+    generate_skymaps(n, src_dirs['models'], src_dirs['events'], src_dirs['skymaps'], start_seed)
+    generate_fit_results(n, src_dirs['models'], src_dirs['events'], src_dirs['fit_results'])
+    os.chdir("../Src")
+    return src_dirs['skymaps']
+    
+
+def generate_bkg_only_data(bkg_only_model='background_only.xml', n=10, start_seed=1):
+    os.chdir("../Tests")
+    timestr = time.strftime("%Y%m%d-%H%M%S_") + bkg_only_model.split('.')[0]
+    bkg_only_dirs = generate_dirs(timestr, bkg_only=True)
+    generate_bkg_only_skymaps(n, bkg_only_model, bkg_only_dirs['events'], bkg_only_dirs['skymaps'], start_seed)
+    os.chdir("../Src")
+    return bkg_only_dirs['skymaps']
+
+
+def analyse_src_data(computed_coords, dir_name):
+    true_coords = Util.read_list_from_json_file('../Tests/' + dir_name + '/Models/coordinates.json')
+    print(true_coords)
+    print(computed_coords)
+    for i in range(0, len(computed_coords)):
+        if computed_coords[i] and true_coords[i]:
+            distance = Util.distance_eu(true_coords[i], computed_coords[i])
+            print(i, distance)
+        else:
+            print(i, "None")
+
+
+def analyse_bkg_only_data(computed_coords):
+    print(computed_coords)
+
+
+def analyse_dir(dir_name, bkg_only=False):
     computed_coords = Util.read_list_from_json_file('../Tests/' + dir_name + '/Skymaps/computed_coordinates.json')
     if not bkg_only:
-        true_coords = Util.read_list_from_json_file('../Tests/' + dir_name + '/Models/coordinates.json')
-        print(true_coords)
-        print(computed_coords)
-        for i in range(0, len(computed_coords)):
-            if computed_coords[i] and true_coords[i]:
-                distance = Util.distance_eu(true_coords[i], computed_coords[i])
-                print(i, distance)
-            else:
-                print(i, "None")
+        analyse_src_data(computed_coords, dir_name)
     else:
-        print(computed_coords)
-    os.chdir("tests")
+        analyse_bkg_only_data(computed_coords)
 
 
-def source_finder_tests(flow=2.0, n=10, start_coords=(221, 46), radius=1, start_model='default.xml', start_seed=1,
-                        generate=True):
-    os.chdir("../")
-    if generate:
-        dirs = generate_data(flow, n, start_coords, radius, start_model, start_seed)
-        set_conf(dirs['skymaps'])
+def run_source_finder():
+    """"""
     sf = SourceFinder('conf.json')
     sf.compute_coords()
+
+
+def plot_data(dir_name):
+    skymaps_path = '../Tests/' + dir_name + '/Skymaps/'
+    measures_dir = 'Measures/'
+    measures = ['isolatedness', 'intensity']
+    path = skymaps_path + measures_dir
+    data = {}
+    for measure_file in sorted(os.listdir(path)):
+        data[measure_file.split('.')[0]] = Util.read_list_from_json_file(path + measure_file)
+
+    for skymap in sorted(os.listdir(skymaps_path)):
+        if skymap.endswith('.fits'):
+            wcs = WCS(skymap)
+            for measure in measures:
+                for point in data[skymap.split('.fits')[0] + '_' + measure]:
+                    eq = Util.from_pix_to_wcs((point['original'][1], point['original'][0]), wcs)
+                    parameters = Util.read_list_from_json_file('conf.json')
+                    plt.plot(parameters['sigma_array'], point['values'],
+                             label=str(round(float(eq[0]), 2)) + ", " + str(round(float(eq[1]), 2)))
+                    plt.title(measure)
+                    plt.legend()
+                plt.figure()
+
+
+def run(bkg_only=False, dir_name=None):
+    os.chdir("../")
+
+    base_seed = random.randint(1, 1000000)
+    if not dir_name:
+        if not bkg_only:
+            # CHANGE SRC PARAMETERS HERE
+            skymaps_dir = generate_src_data(flow=2.0, n=2, start_seed=base_seed)
+        else:
+            # CHANGE BKG_ONLY PARAMETERS HERE
+            skymaps_dir = generate_bkg_only_data(n=5, start_seed=base_seed)
+        set_conf(skymaps_dir)
+        run_source_finder()
+
+    if not dir_name:
+        dir_name = Util.read_list_from_json_file('conf.json')['dir'].split('/')[-3]
+    else:
+        plot_data(dir_name)
+    analyse_dir(dir_name, bkg_only)
+    plt.show()
+
     os.chdir("tests")
 
-    timestr = Util.read_list_from_json_file('../conf.json')['dir'].split('/')[-3]
-    if start_model != 'background_only.xml':
-        analyse_data(timestr)
-    else:
-        analyse_data(timestr, bkg_only=True)
 
+# UNCOMMENT WHAT YOU NEED
+#run()
+run(dir_name='20190419-103022_default_2.0')
+# run(bkg_only=True)
+# run(bkg_only=True, dir_name='20190419-095157_background_only')
 
-base_seed = random.randint(1, 1000000)
-# source_finder_tests(n=5, start_seed=base_seed, start_model='background_only.xml', generate=True)
-source_finder_tests(n=5, start_seed=base_seed, start_model='background_only.xml', generate=True, flow=1.0)
-plt.show()

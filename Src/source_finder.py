@@ -25,11 +25,12 @@ class SourceFinder:
         cur_dir = os.getcwd()
         os.chdir(skymaps_dir)
         coords = []
+        os.mkdir('Measures')
         for skymap in sorted(os.listdir('.')):
             if skymap.endswith('.fits'):
                 # print(skymap)
                 self.matrix = Util.from_fits_to_mat(skymap)
-                measures = self.compute_measures()
+                measures = self.compute_measures(skymap.split('.')[0])
                 self.visualize_data(measures, WCS(skymap))  # UNCOMMENT TO SHOW GRAPHS
                 src_pix_pos = self.best_candidate(measures)
                 if src_pix_pos:
@@ -38,7 +39,6 @@ class SourceFinder:
                 else:
                     coords.append(None)
         Util.write_list_to_json_file(coords, "computed_coordinates.json")
-        # plt.show()  # UNCOMMENT TO SHOW GRAPHS
         os.chdir(cur_dir)
         return coords
 
@@ -47,18 +47,18 @@ class SourceFinder:
         votes = []
         total_votes = 0
 
-        isolatedness_pdl = measures['isolatedness']
-        for step in range(0, len(isolatedness_pdl.points)):
-            values = isolatedness_pdl.project_list(step)
+        intensity_pdl = measures['intensity']
+        for step in range(0, len(intensity_pdl.points)):
+            values = intensity_pdl.project_list(step)
             if len(values) < 2:
                 return None
             sorted_values = sorted(values, reverse=True)
             if sorted_values[0] >= sorted_values[1] * self.parameters['k']:
-                if candidates.count(isolatedness_pdl.points[values.index(sorted_values[0])].original) == 0:
-                    candidates.append(isolatedness_pdl.points[values.index(sorted_values[0])].original)
+                if candidates.count(intensity_pdl.points[values.index(sorted_values[0])].original) == 0:
+                    candidates.append(intensity_pdl.points[values.index(sorted_values[0])].original)
                     votes.append(1)
                 else:
-                    votes[candidates.index(isolatedness_pdl.points[values.index(sorted_values[0])].original)] += 1
+                    votes[candidates.index(intensity_pdl.points[values.index(sorted_values[0])].original)] += 1
                 total_votes += 1
 
         if not votes:
@@ -66,7 +66,7 @@ class SourceFinder:
 
         # print(votes)
         sorted_votes = sorted(votes, reverse=True)
-        if sorted_votes[0] >= len(isolatedness_pdl.points[0].values) * self.parameters['quorum']:
+        if sorted_votes[0] >= len(intensity_pdl.points[0].values) * self.parameters['quorum']:
             return candidates[votes.index(sorted_votes[0])][1], candidates[votes.index(sorted_votes[0])][0]
         else:
             return None
@@ -115,22 +115,24 @@ class SourceFinder:
             smoothed = cv.GaussianBlur(smoothed, Util.kernel_size(sigma_to_add), sigma_to_add)
         return smoothed
 
-    def compute_measures(self):
+    def compute_measures(self, skymap):
         """"""
         smoothed = None
         last_sigma = 0
-        isolatedness_pdl = PointDataList(self.parameters['dist_thresh'])
-        intensity_pdl = PointDataList(self.parameters['dist_thresh'])
+        measures = {'isolatedness': PointDataList(self.parameters['dist_thresh']),
+                    'intensity': PointDataList(self.parameters['dist_thresh'])}
 
         for step in range(0, len(self.parameters['sigma_array'])):
             sigma = self.parameters['sigma_array'][step]
             smoothed = self.smooth_image(sigma, last_sigma, smoothed)
             last_sigma = sigma
             maxima = self.sorted_maxima(smoothed, sigma)
-            self.update_isolatedness(maxima, step, isolatedness_pdl)
-            self.update_intensity(maxima, step, intensity_pdl)
+            self.update_isolatedness(maxima, step, measures['isolatedness'])
+            self.update_intensity(maxima, step, measures['intensity'])
 
-        measures = {'isolatedness': isolatedness_pdl, 'intensity': intensity_pdl}
+        for key in measures.keys():
+            Util.write_list_to_json_file(measures[key].to_list(), 'Measures/' + skymap + '_' + key + '.json')
+
         return measures
 
 

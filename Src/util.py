@@ -119,9 +119,9 @@ class Util:
             return json.load(f)
 
     @staticmethod
-    def json_beautifier(json_data):
+    def json_beautifier(json_data, sort_keys):
         """Return json_data in a beautified output"""
-        return json.dumps(json.loads(json_data), indent=4, sort_keys=False)
+        return json.dumps(json.loads(json_data), indent=4, sort_keys=sort_keys)
 
     @staticmethod
     def from_list_to_json(a_list):
@@ -129,9 +129,9 @@ class Util:
         return json.dumps(a_list)
 
     @staticmethod
-    def write_list_to_json_file(a_list, file_name):
+    def write_list_to_json_file(a_list, file_name, sort_keys=False):
         """Save a_list in json beautified format in the file file_name"""
-        beauty_output = Util.json_beautifier(Util.from_list_to_json(a_list))
+        beauty_output = Util.json_beautifier(json_data=Util.from_list_to_json(a_list), sort_keys=sort_keys)
         text_file = open(file_name, "w")
         text_file.write("%s" % beauty_output)
         text_file.close()

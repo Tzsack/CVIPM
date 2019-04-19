@@ -28,6 +28,9 @@ class PointData:
             result += str(round(value, 2)) + '\t '
         return result
 
+    def to_dict(self):
+        return {'original': self.original, 'values': self.values}
+
 
 class PointDataList:
 
@@ -63,4 +66,10 @@ class PointDataList:
         result = ''
         for point in self.points:
             result += point.to_string() + '\n'
+        return result
+
+    def to_list(self):
+        result = []
+        for point in self.points:
+            result.append(point.to_dict())
         return result
