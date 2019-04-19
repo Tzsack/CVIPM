@@ -1,15 +1,13 @@
 import math
 import os
+import shutil
 
 import cv2 as cv
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from astropy.wcs import WCS
 
 from gaussian_interpolation import GInterpolation as gi
 from util import Util
-import numpy as np
-from point_data import PointData
 from point_data import PointDataList
 
 
@@ -26,6 +24,8 @@ class SourceFinder:
         cur_dir = os.getcwd()
         os.chdir(skymaps_dir)
         coords = []
+        if os.listdir('.').count('Measures') != 0:
+            shutil.rmtree('Measures')
         os.mkdir('Measures')
 
         for skymap in sorted(os.listdir('.')):
@@ -44,59 +44,51 @@ class SourceFinder:
         return coords
 
     def best_candidate(self, measures):
-        candidates = []
-        votes = []
-        total_votes = 0
+        candidates = PointDataList(self.parameters['election_dist_thresh'])
+        no_source = 0
 
-        intensity_pdl = measures['intensity']
-        for step in range(0, len(intensity_pdl.points)):
-            values = intensity_pdl.project_list(step)
-            if len(values) < 2:
-                return None
-            sorted_values = sorted(values, reverse=True)
-            if sorted_values[0] >= sorted_values[1] * self.parameters['k']:
-                if candidates.count(intensity_pdl.points[values.index(sorted_values[0])].original) == 0:
-                    candidates.append(intensity_pdl.points[values.index(sorted_values[0])].original)
-                    votes.append(1)
-                else:
-                    votes[candidates.index(intensity_pdl.points[values.index(sorted_values[0])].original)] += 1
-                total_votes += 1
-
-        if not votes:
-            return None
-
-        # print(votes)
-        sorted_votes = sorted(votes, reverse=True)
-        if sorted_votes[0] >= len(intensity_pdl.points[0].values) * self.parameters['quorum']:
-            return candidates[votes.index(sorted_votes[0])][1], candidates[votes.index(sorted_votes[0])][0]
-        else:
-            return None
-
-    def visualize_data(self, measures, wcs):
-        """Visualize data"""
         for key in measures.keys():
-            measure = measures[key]
-            print(measure.to_string())
-            for point in measure.points:
-                eq = Util.from_pix_to_wcs((point.original[1], point.original[0]), wcs)
-                plt.plot(self.parameters['sigma_array'], point.values, label=str(round(float(eq[0]), 2))+", "+str(round(float(eq[1]), 2)))
-                plt.title(key)
-                plt.legend()
-            plt.figure()
+            pdl = measures[key]
+            for step in range(0, len(pdl.points[0].values)):
+                values = pdl.project_list(step)
+                sorted_values = sorted(values, reverse=True)
+                votes = self.parameters[key]['vote_weight']
+                if len(sorted_values) < 2 or \
+                        sorted_values[0] >= sorted_values[1] * self.parameters[key]['vote_threshold']:
+                    coords = pdl.points[values.index(sorted_values[0])].original
+                    point = candidates.get_point(coords)
+                    if point:
+                        votes += point.values[0]
+                    candidates.set(coords, votes, 0)
+                else:
+                    no_source += votes
+
+        print(candidates.to_string())
+        print('no_source', no_source)
+        print('')
+
+        winner = None
+        winner_votes = no_source
+        for point in candidates.points:
+            if point.values[0] > winner_votes:
+                winner_votes = point.values[0]
+                winner = point.original
+
+        return winner
 
     def update_isolatedness(self, maxima, step, point_data_list):
-        for maximum_a in maxima[:self.parameters['maxima_per_iter']]:
+        for maximum_a in maxima[:self.parameters['isolatedness']['maxima_per_iter']]:
             distances = []
             for maximum_b in maxima:
                 distances.append(Util.distance_eu(maximum_a[0], maximum_b[0]))
             distances.sort()
             isolatedness = 0
-            for d in distances[1:self.parameters['furthest_index']]:
+            for d in distances[1:self.parameters['isolatedness']['furthest_index']]:
                 isolatedness += d
             point_data_list.set(maximum_a[0], isolatedness, step)
 
     def update_intensity(self, maxima, step, point_data_list):
-        for maximum_a in maxima[:self.parameters['maxima_per_iter']]:
+        for maximum_a in maxima[:self.parameters['intensity']['maxima_per_iter']]:
             point_data_list.set(maximum_a[0], maximum_a[1], step)
 
     @staticmethod
@@ -120,16 +112,19 @@ class SourceFinder:
         """"""
         smoothed = None
         last_sigma = 0
-        measures = {'isolatedness': PointDataList(self.parameters['dist_thresh']),
-                    'intensity': PointDataList(self.parameters['dist_thresh'])}
+        measures = {}
+
+        for key in self.parameters['active_measures']:
+            measures[key] = PointDataList(self.parameters[key]['dist_thresh'])
 
         for step in range(0, len(self.parameters['sigma_array'])):
             sigma = self.parameters['sigma_array'][step]
             smoothed = self.smooth_image(sigma, last_sigma, smoothed)
             last_sigma = sigma
             maxima = self.sorted_maxima(smoothed, sigma)
-            self.update_isolatedness(maxima, step, measures['isolatedness'])
-            self.update_intensity(maxima, step, measures['intensity'])
+
+            for key in self.parameters['active_measures']:
+                getattr(self, self.parameters[key]['method'])(maxima, step, measures[key])
 
         for key in measures.keys():
             Util.write_list_to_json_file(measures[key].to_list(), 'Measures/' + skymap + '_' + key + '.json')

@@ -5,13 +5,10 @@ import math
 import xml.etree.ElementTree as Et
 import time
 
-import gammalib
 import ctools
-import cscripts
 
 import matplotlib.pyplot as plt
 from astropy.wcs import WCS
-import numpy as np
 
 import sys
 
@@ -191,8 +188,8 @@ def generate_bkg_only_data(bkg_only_model='background_only.xml', n=10, start_see
 
 def analyse_src_data(computed_coords, dir_name):
     true_coords = Util.read_list_from_json_file('../Tests/' + dir_name + '/Models/coordinates.json')
-    print(true_coords)
-    print(computed_coords)
+    print("true coordinates:    ", true_coords)
+    print("computed coordinates:", computed_coords)
     for i in range(0, len(computed_coords)):
         if computed_coords[i] and true_coords[i]:
             distance = Util.distance_eu(true_coords[i], computed_coords[i])
@@ -234,8 +231,8 @@ def plot_data(dir_name, measures):
             wcs = WCS(skymaps_path + skymap)
             for measure in measures:
                 for point in data[skymap.split('.fits')[0] + '_' + measure]:
-                    print(point)
-                    eq = Util.from_pix_to_wcs((point['original'][1], point['original'][0]), wcs)
+                    # eq = Util.from_pix_to_wcs(point['original'], wcs)
+                    eq = point['original']
                     parameters = Util.read_list_from_json_file('conf.json')
                     plt.plot(parameters['sigma_array'], point['values'],
                              label=str(round(float(eq[0]), 2)) + ", " + str(round(float(eq[1]), 2)))
@@ -245,7 +242,7 @@ def plot_data(dir_name, measures):
     plt.show()
 
 
-def run(bkg_only=False, dir_name=None):
+def run(bkg_only=False, dir_name=None, compute=False):
     """"""
     os.chdir("../")
 
@@ -261,19 +258,22 @@ def run(bkg_only=False, dir_name=None):
             skymaps_dir = generate_bkg_only_data(n=5, start_seed=base_seed)
         set_conf(skymaps_dir)
         run_source_finder()
-
-    if not dir_name:
         dir_name = Util.read_list_from_json_file('conf.json')['dir'].split('/')[-3]
 
-    plot_data(dir_name, measures)
+    elif compute:
+        skymaps_dir = dir_name+'/Skymaps'
+        set_conf(skymaps_dir)
+        run_source_finder()
+
     analyse_dir(dir_name, bkg_only)
+    plot_data(dir_name, measures)
 
     os.chdir("tests")
 
 
 # UNCOMMENT WHAT YOU NEED
-run() # GENERATE NEW SRC SKYMAPS
-# run(dir_name='20190419-155437_default_2.0') # ANALYSE SRC SKYMAPS IN DIR_NAME/SKYMAPS/
+# run()  # GENERATE NEW SRC SKYMAPS
+run(dir_name='20190419-170321_default_2.0', compute=True)  # ANALYSE SRC SKYMAPS IN DIR_NAME/SKYMAPS/
 # run(bkg_only=True) # GENERATE NEW BKG_ONLY SKYMAPS
 # run(bkg_only=True, dir_name='20190419-160320_background_only') # ANALYSE BKG_ONLY SKYMAPS IN DIR_NAME/SKYMAPS
 

@@ -47,6 +47,12 @@ class PointDataList:
             while len(point.values) < maxlen:
                 point.add(point.latest, 0)
 
+    def get_point(self, coords):
+        for point in self.points:
+            if point.compatible(coords):
+                return point
+        return None
+
     def set(self, coords, value, index):
         found = False
         for point in self.points:
