@@ -21,23 +21,24 @@ class SourceFinder:
         self.matrix = None
 
     def compute_coords(self):
+        """"""
         skymaps_dir = self.parameters['dir']
         cur_dir = os.getcwd()
         os.chdir(skymaps_dir)
         coords = []
         os.mkdir('Measures')
+
         for skymap in sorted(os.listdir('.')):
             if skymap.endswith('.fits'):
-                # print(skymap)
                 self.matrix = Util.from_fits_to_mat(skymap)
                 measures = self.compute_measures(skymap.split('.')[0])
-                self.visualize_data(measures, WCS(skymap))  # UNCOMMENT TO SHOW GRAPHS
                 src_pix_pos = self.best_candidate(measures)
                 if src_pix_pos:
                     src_eq_pos = Util.from_pix_to_wcs(src_pix_pos, WCS(skymap))
                     coords.append((float(src_eq_pos[0]), float(src_eq_pos[1])))
                 else:
                     coords.append(None)
+
         Util.write_list_to_json_file(coords, "computed_coordinates.json")
         os.chdir(cur_dir)
         return coords

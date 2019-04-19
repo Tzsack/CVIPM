@@ -219,20 +219,22 @@ def run_source_finder():
     sf.compute_coords()
 
 
-def plot_data(dir_name):
+def plot_data(dir_name, measures):
+    """"""
     skymaps_path = '../Tests/' + dir_name + '/Skymaps/'
     measures_dir = 'Measures/'
-    measures = ['isolatedness', 'intensity']
     path = skymaps_path + measures_dir
     data = {}
+
     for measure_file in sorted(os.listdir(path)):
         data[measure_file.split('.')[0]] = Util.read_list_from_json_file(path + measure_file)
 
     for skymap in sorted(os.listdir(skymaps_path)):
         if skymap.endswith('.fits'):
-            wcs = WCS(skymap)
+            wcs = WCS(skymaps_path + skymap)
             for measure in measures:
                 for point in data[skymap.split('.fits')[0] + '_' + measure]:
+                    print(point)
                     eq = Util.from_pix_to_wcs((point['original'][1], point['original'][0]), wcs)
                     parameters = Util.read_list_from_json_file('conf.json')
                     plt.plot(parameters['sigma_array'], point['values'],
@@ -240,16 +242,20 @@ def plot_data(dir_name):
                     plt.title(measure)
                     plt.legend()
                 plt.figure()
+    plt.show()
 
 
 def run(bkg_only=False, dir_name=None):
+    """"""
     os.chdir("../")
 
-    base_seed = random.randint(1, 1000000)
+    measures = ['isolatedness', 'intensity']
+
     if not dir_name:
+        base_seed = random.randint(1, 1000000)
         if not bkg_only:
             # CHANGE SRC PARAMETERS HERE
-            skymaps_dir = generate_src_data(flow=2.0, n=2, start_seed=base_seed)
+            skymaps_dir = generate_src_data(flow=2.0, n=5, start_seed=base_seed)
         else:
             # CHANGE BKG_ONLY PARAMETERS HERE
             skymaps_dir = generate_bkg_only_data(n=5, start_seed=base_seed)
@@ -258,17 +264,16 @@ def run(bkg_only=False, dir_name=None):
 
     if not dir_name:
         dir_name = Util.read_list_from_json_file('conf.json')['dir'].split('/')[-3]
-    else:
-        plot_data(dir_name)
+
+    plot_data(dir_name, measures)
     analyse_dir(dir_name, bkg_only)
-    plt.show()
 
     os.chdir("tests")
 
 
 # UNCOMMENT WHAT YOU NEED
-#run()
-run(dir_name='20190419-103022_default_2.0')
-# run(bkg_only=True)
-# run(bkg_only=True, dir_name='20190419-095157_background_only')
+run() # GENERATE NEW SRC SKYMAPS
+# run(dir_name='20190419-155437_default_2.0') # ANALYSE SRC SKYMAPS IN DIR_NAME/SKYMAPS/
+# run(bkg_only=True) # GENERATE NEW BKG_ONLY SKYMAPS
+# run(bkg_only=True, dir_name='20190419-160320_background_only') # ANALYSE BKG_ONLY SKYMAPS IN DIR_NAME/SKYMAPS
 
