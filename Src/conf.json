@@ -1,19 +1,13 @@
 {
-    "dir": "../Tests/20190419-170321_default_2.0/Skymaps",
+    "dir": "../Tests/20190420-091900_default_2.0/Skymaps",
     "sigma_array": [
-        1.1,
-        1.3,
-        1.5,
-        1.7,
+        1.6,
         1.9,
-        2.1,
-        2.3,
+        2.2,
         2.5,
-        2.7,
-        2.9,
-        3.0,
+        2.8,
         3.1,
-        3.2
+        3.4
     ],
     "active_measures": [
         "isolatedness",
@@ -22,14 +16,14 @@
     "isolatedness": {
         "maxima_per_iter": 3,
         "furthest_index": 2,
-        "vote_threshold": 1.0,
+        "vote_threshold": 1.3,
         "vote_weight": 0.1,
         "dist_thresh": 4,
         "method": "update_isolatedness"
     },
     "intensity": {
         "maxima_per_iter": 3,
-        "vote_threshold": 1.0,
+        "vote_threshold": 1.2,
         "vote_weight": 1.0,
         "dist_thresh": 4,
         "method": "update_intensity"
