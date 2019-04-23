@@ -166,7 +166,7 @@ def set_conf(skymaps_dir):
     Util.write_list_to_json_file(conf_params, 'conf.json')
 
 
-def generate_src_data(start_model='default2.xml', flow=2.0, n=10, start_coords=(221, 46), radius=1, start_seed=1):
+def generate_src_data(start_model='default.xml', flow=2.0, n=10, start_coords=(221, 46), radius=1, start_seed=1):
     os.chdir("../Tests")
     timestr = time.strftime("%Y%m%d-%H%M%S_") + start_model.split('.')[0] + '_' + str(flow)
     src_dirs = generate_dirs(timestr)
@@ -252,10 +252,10 @@ def run(bkg_only=False, dir_name=None, compute=False):
         base_seed = random.randint(1, 1000000)
         if not bkg_only:
             # CHANGE SRC PARAMETERS HERE
-            skymaps_dir = generate_src_data(flow=2.0, n=5, start_seed=base_seed)
+            skymaps_dir = generate_src_data(flow=2.0, n=100, start_seed=base_seed)
         else:
             # CHANGE BKG_ONLY PARAMETERS HERE
-            skymaps_dir = generate_bkg_only_data(n=5, start_seed=base_seed)
+            skymaps_dir = generate_bkg_only_data(n=100, start_seed=base_seed)
         set_conf(skymaps_dir)
         run_source_finder()
         dir_name = Util.read_list_from_json_file('conf.json')['dir'].split('/')[-3]
@@ -273,6 +273,6 @@ def run(bkg_only=False, dir_name=None, compute=False):
 
 # UNCOMMENT WHAT YOU NEED
 # run()  # GENERATE NEW SRC SKYMAPS
-run(dir_name='20190420-091900_default_2.0', compute=True)  # ANALYSE SRC SKYMAPS IN DIR_NAME/SKYMAPS/
-# run(bkg_only=True, compute=False)  # GENERATE NEW BKG_ONLY SKYMAPS
+# run(dir_name='20190420-091900_default_2.0', compute=True)  # ANALYSE SRC SKYMAPS IN DIR_NAME/SKYMAPS/
+run(bkg_only=True, compute=True)  # GENERATE NEW BKG_ONLY SKYMAPS
 # run(bkg_only=True, dir_name='20190420-111028_background_only', compute=True)  # ANALYSE BKG_ONLY SKYMAPS IN DIR_NAME/SKYMAPS

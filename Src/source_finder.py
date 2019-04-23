@@ -53,7 +53,7 @@ class SourceFinder:
                 values = pdl.project_list(step)
                 sorted_values = sorted(values, reverse=True)
                 votes = self.parameters[key]['vote_weight']
-                print(key, step, sorted_values[0], '/', sorted_values[1], '=', sorted_values[0] / sorted_values[1])
+                # print(key, step, sorted_values[0], '/', sorted_values[1], '=', sorted_values[0] / sorted_values[1])
                 if len(sorted_values) < 2 or \
                         sorted_values[0] >= sorted_values[1] * self.parameters[key]['vote_threshold']:
                     coords = pdl.points[values.index(sorted_values[0])].original
