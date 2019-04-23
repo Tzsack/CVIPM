@@ -30,6 +30,7 @@ class SourceFinder:
 
         for skymap in sorted(os.listdir('.')):
             if skymap.endswith('.fits'):
+                print(skymap)
                 self.matrix = Util.from_fits_to_mat(skymap)
                 measures = self.compute_measures(skymap.split('.')[0])
                 src_pix_pos = self.best_candidate(measures)

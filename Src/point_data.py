@@ -17,7 +17,8 @@ class PointData:
         self.latest = coords
         while index > len(self.values) - 1:
             self.add(self.latest, 0)
-        self.values[index] = value
+        if value > self.values[index]:
+            self.values[index] = value
 
     def compatible(self, coords):
         return Util.distance_eu(coords, self.latest) < self.comp_radius
