@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<source_library title="source library">
+  <source name="Crab" type="PointSource">
+    <spectrum type="PowerLaw">
+      <parameter name="Prefactor" value="1.8053905509456" error="0.359967329956765" scale="1e-17" min="1e-07" max="1000" free="1" />
+      <parameter name="Index" value="2.49550191069765" error="0.155588651884008" scale="-1" min="0" max="5" free="1" />
+      <parameter name="PivotEnergy" value="0.3" scale="1000000" min="0.01" max="1000" free="0" />
+    </spectrum>
+    <spatialModel type="PointSource">
+      <parameter name="RA" value="220.935685378757" scale="1" min="-360" max="360" free="0" />
+      <parameter name="DEC" value="45.6761944095532" scale="1" min="-90" max="90" free="0" />
+    </spatialModel>
+  </source>
+  <source name="CTABackgroundModel" type="CTAIrfBackground" instrument="CTA">
+    <spectrum type="PowerLaw">
+      <parameter name="Prefactor" value="0.983612463165456" error="0.0165493819379184" scale="1" min="0.001" max="1000" free="1" />
+      <parameter name="Index" value="-0.00714340134149352" error="0.0103824317097908" scale="1" min="-5" max="5" free="1" />
+      <parameter name="PivotEnergy" value="1" scale="1000000" min="0.01" max="1000" free="0" />
+    </spectrum>
+  </source>
+</source_library>
