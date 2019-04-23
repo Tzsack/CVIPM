@@ -166,7 +166,7 @@ def set_conf(skymaps_dir):
     Util.write_list_to_json_file(conf_params, 'conf.json')
 
 
-def generate_src_data(start_model='default.xml', flow=2.0, n=10, start_coords=(221, 46), radius=1, start_seed=1):
+def generate_src_data(start_model='default2.xml', flow=2.0, n=10, start_coords=(221, 46), radius=1, start_seed=1):
     os.chdir("../Tests")
     timestr = time.strftime("%Y%m%d-%H%M%S_") + start_model.split('.')[0] + '_' + str(flow)
     src_dirs = generate_dirs(timestr)
@@ -231,8 +231,8 @@ def plot_data(dir_name, measures):
             wcs = WCS(skymaps_path + skymap)
             for measure in measures:
                 for point in data[skymap.split('.fits')[0] + '_' + measure]:
-                    # eq = Util.from_pix_to_wcs(point['original'], wcs)
-                    eq = point['original']
+                    eq = Util.from_pix_to_wcs(point['original'], wcs)
+                    # eq = point['original']
                     parameters = Util.read_list_from_json_file('conf.json')
                     plt.plot(parameters['sigma_array'], point['values'],
                              label=str(round(float(eq[0]), 2)) + ", " + str(round(float(eq[1]), 2)))
@@ -252,10 +252,10 @@ def run(bkg_only=False, dir_name=None, compute=False):
         base_seed = random.randint(1, 1000000)
         if not bkg_only:
             # CHANGE SRC PARAMETERS HERE
-            skymaps_dir = generate_src_data(flow=2.0, n=100, start_seed=base_seed)
+            skymaps_dir = generate_src_data(flow=2.0, n=5, start_seed=base_seed)
         else:
             # CHANGE BKG_ONLY PARAMETERS HERE
-            skymaps_dir = generate_bkg_only_data(n=100, start_seed=base_seed)
+            skymaps_dir = generate_bkg_only_data(n=5, start_seed=base_seed)
         set_conf(skymaps_dir)
         run_source_finder()
         dir_name = Util.read_list_from_json_file('conf.json')['dir'].split('/')[-3]

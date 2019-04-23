@@ -18,14 +18,14 @@
         "furthest_index": 2,
         "vote_threshold": 1.3,
         "vote_weight": 0.1,
-        "dist_thresh": 4,
+        "dist_thresh": 10,
         "method": "update_isolatedness"
     },
     "intensity": {
         "maxima_per_iter": 3,
-        "vote_threshold": 1.2,
+        "vote_threshold": 1.18,
         "vote_weight": 1.0,
-        "dist_thresh": 4,
+        "dist_thresh": 10,
         "method": "update_intensity"
     },
     "election_dist_thresh": 0.1
