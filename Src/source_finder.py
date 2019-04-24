@@ -97,8 +97,8 @@ class SourceFinder:
     def sorted_maxima(smoothed, sigma):
         """"""
         maxima = Util.local_maxima(smoothed)
-        if sigma >= 0.5:
-            maxima = gi.optimize_maxima(smoothed, maxima, sigma)
+        # if sigma >= 0.5:
+        #     maxima = gi.optimize_maxima(smoothed, maxima, sigma)
         maxima = Util.sort_list(maxima, 1, True)
         return maxima
 

@@ -200,6 +200,12 @@ def analyse_src_data(computed_coords, dir_name):
 
 def analyse_bkg_only_data(computed_coords):
     print(computed_coords)
+    errors = 0
+    for i in range(0, len(computed_coords)):
+        if computed_coords[i]:
+            print("False Positive: "+str(i))
+            errors += 1
+    print("\nTotal Errors: "+str(errors)+"/"+str(len(computed_coords)))
 
 
 def analyse_dir(dir_name, bkg_only=False):
@@ -255,7 +261,7 @@ def run(bkg_only=False, dir_name=None, compute=False):
             skymaps_dir = generate_src_data(flow=2.0, n=1000, start_seed=base_seed)
         else:
             # CHANGE BKG_ONLY PARAMETERS HERE
-            skymaps_dir = generate_bkg_only_data(n=100, start_seed=base_seed)
+            skymaps_dir = generate_bkg_only_data(n=1000, start_seed=base_seed)
         set_conf(skymaps_dir)
         run_source_finder()
         dir_name = Util.read_list_from_json_file('conf.json')['dir'].split('/')[-3]
@@ -272,7 +278,7 @@ def run(bkg_only=False, dir_name=None, compute=False):
 
 
 # UNCOMMENT WHAT YOU NEED
-run()  # GENERATE NEW SRC SKYMAPS
+# run()  # GENERATE NEW SRC SKYMAPS
 # run(dir_name='20190423-124304_default_2.0', compute=True)  # ANALYSE SRC SKYMAPS IN DIR_NAME/SKYMAPS/
-# run(bkg_only=True, compute=True)  # GENERATE NEW BKG_ONLY SKYMAPS
-# run(bkg_only=True, dir_name='20190423-124050_background_only', compute=True)  # ANALYSE BKG_ONLY SKYMAPS IN DIR_NAME/SKYMAPS
+# run(bkg_only=True, compute=False)  # GENERATE NEW BKG_ONLY SKYMAPS
+run(bkg_only=True, dir_name='20190424-095047_background_only', compute=True)  # ANALYSE BKG_ONLY SKYMAPS IN DIR_NAME/SKYMAPS
