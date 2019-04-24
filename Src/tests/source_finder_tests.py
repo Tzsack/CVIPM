@@ -188,11 +188,20 @@ def generate_bkg_only_data(bkg_only_model='background_only.xml', n=10, start_see
 
 def analyse_src_data(computed_coords, dir_name):
     true_coords = Util.read_list_from_json_file('../Tests/' + dir_name + '/Models/coordinates.json')
-    print("true coordinates:    ", true_coords)
+    # print("true coordinates:    ", true_coords)
+    skymaps_path = '../Tests/' + dir_name + '/Skymaps/'
+    present_coords = []
+
+    for skymap in sorted(os.listdir(skymaps_path)):
+        if skymap.endswith('.fits'):
+            present_coords.append(true_coords[int(skymap.split('.')[0].lstrip('0'))])
+
+    print("true coordinates:", present_coords)
     print("computed coordinates:", computed_coords)
+
     for i in range(0, len(computed_coords)):
-        if computed_coords[i] and true_coords[i]:
-            distance = Util.distance_eu(true_coords[i], computed_coords[i])
+        if computed_coords[i] and present_coords[i]:
+            distance = Util.distance_eu(present_coords[i], computed_coords[i])
             print(i, distance)
         else:
             print(i, "None")
@@ -203,7 +212,7 @@ def analyse_bkg_only_data(computed_coords):
     errors = 0
     for i in range(0, len(computed_coords)):
         if computed_coords[i]:
-            print("False Positive: "+str(i))
+            print(str(i) + ". False Positive: " + str(computed_coords[i]))
             errors += 1
     print("\nTotal Errors: "+str(errors)+"/"+str(len(computed_coords)))
 
@@ -242,7 +251,7 @@ def plot_data(dir_name, measures):
                     parameters = Util.read_list_from_json_file('conf.json')
                     plt.plot(parameters['sigma_array'], point['values'],
                              label=str(round(float(eq[0]), 2)) + ", " + str(round(float(eq[1]), 2)))
-                    plt.title(measure)
+                    plt.title(skymap + " " + measure)
                     plt.legend()
                 plt.figure()
     plt.show()
@@ -272,13 +281,13 @@ def run(bkg_only=False, dir_name=None, compute=False):
         run_source_finder()
 
     analyse_dir(dir_name, bkg_only)
-    plot_data(dir_name, measures)
+    # plot_data(dir_name, measures)
 
     os.chdir("tests")
 
 
 # UNCOMMENT WHAT YOU NEED
 # run()  # GENERATE NEW SRC SKYMAPS
-# run(dir_name='20190423-124304_default_2.0', compute=True)  # ANALYSE SRC SKYMAPS IN DIR_NAME/SKYMAPS/
+run(dir_name='20190423-155620_default_2.0', compute=True)  # ANALYSE SRC SKYMAPS IN DIR_NAME/SKYMAPS/
 # run(bkg_only=True, compute=False)  # GENERATE NEW BKG_ONLY SKYMAPS
-run(bkg_only=True, dir_name='20190424-095047_background_only', compute=True)  # ANALYSE BKG_ONLY SKYMAPS IN DIR_NAME/SKYMAPS
+# run(bkg_only=True, dir_name='20190424-114914_background_only', compute=True)  # ANALYSE BKG_ONLY SKYMAPS IN DIR_NAME/SKYMAPS
