@@ -1,7 +1,7 @@
 import numpy as np
 import math
 import cv2 as cv
-
+from util import Util
 
 class GInterpolation:
 
@@ -14,6 +14,10 @@ class GInterpolation:
     @staticmethod
     def gaussian(p, mu, sigma):
         return 1/(2*pow(sigma, 2)*math.pi)*math.exp((-pow(p[0] - mu[0], 2) - pow(p[1] - mu[1], 2))/(2*pow(sigma, 2)))
+
+    @staticmethod
+    def gaussian_2(p, mu, sigma):
+        return 1 / (2 * sigma[0] * sigma[1] * math.pi) * math.exp((-pow(p[0] - mu[0], 2) / (2 * pow(sigma[0], 2)) - pow(p[1] - mu[1], 2)) / (2 * pow(sigma[1], 2)))
 
     @staticmethod
     def estimate_prefactor(mat, mu, sigma):
@@ -66,6 +70,45 @@ class GInterpolation:
             mu_x /= radius - skipped
             mu_y /= radius - skipped
         return mu_x, mu_y
+
+    @staticmethod
+    def optimize_maximum_z(mat, maximum, radius=2):
+        mu_x = 0
+        mu_y = 0
+        w = 0
+        for i in range(maximum[0] - radius, maximum[0] + radius + 1):
+            for j in range(maximum[1] - radius, maximum[1] + radius + 1):
+                if i < 0 or i >= len(mat) or j < 0 or j >= len(mat[0]):
+                    continue
+                mu_x += mat[i][j] * i
+                mu_y += mat[i][j] * j
+                w += mat[i][j]
+        mu_x /= w
+        mu_y /= w
+        sigma = 0
+        w = 0
+        for i in range(maximum[0] - radius, maximum[0] + radius + 1):
+            for j in range(maximum[1] - radius, maximum[1] + radius + 1):
+                if i < 0 or i >= len(mat) or j < 0 or j >= len(mat[0]):
+                    continue
+                p = (i, j)
+                sigma += mat[i][j] * math.pow(Util.distance_eu(p, (mu_x, mu_y)), 2)
+                w += mat[i][j]
+        sigma /= w
+        sigma = math.sqrt(sigma)
+        prefactor = GInterpolation.estimate_prefactor(mat, (mu_x, mu_y), sigma)
+        return mu_x, mu_y, sigma, prefactor
+
+    @staticmethod
+    def optimize_maxima_z(mat, maxima):
+        result = []
+        for i in range(0, len(maxima)):
+            es = GInterpolation.optimize_maximum_z(mat, maxima[i][0])
+            mu = (es[0], es[1])
+            sigma = es[2]
+            prefactor = es[3]
+            result.append((mu, prefactor * GInterpolation.gaussian(mu, mu, sigma)))
+        return result
 
     @staticmethod
     def optimize_maxima(mat, maxima, sigma):

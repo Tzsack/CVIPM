@@ -135,3 +135,51 @@ class Util:
         text_file = open(file_name, "w")
         text_file.write("%s" % beauty_output)
         text_file.close()
+
+    @staticmethod
+    def blob_test(mat):
+        res = np.copy(mat)
+        for i in range(1, len(mat) - 1):
+            for j in range(1, len(mat[i]) - 1):
+                u = 0
+                d = 1
+                if mat[i+1][j] >= mat[i][j]:
+                    u += 1
+                    d *= -1
+                if mat[i][j+1] >= mat[i][j]:
+                    u += 1
+                if mat[i-1][j] >= mat[i][j]:
+                    u += 1
+                    d *= -1
+                if mat[i][j-1] >= mat[i][j]:
+                    u += 1
+
+                if u == 4:
+                    res[i][j] = 0  # minimum
+                if u == 3:
+                    res[i][j] = 0  # valley
+                if u == 1:
+                    res[i][j] = 1  # crest
+                if u == 2:
+                    if d > 0:
+                        res[i][j] = 0  # saddle
+                    else:
+                        res[i][j] = 1  # slope
+                if u == 0:
+                    res[i][j] = 0.5  # maximum
+        return res
+
+    @staticmethod
+    def minmax_normalize(mat):
+        return (mat - np.amin(mat)) * 1/(np.amax(mat) - np.amin(mat))
+
+    @staticmethod
+    def binarize(mat, t):
+        res = np.copy(mat)
+        for i in range(0, len(res)):
+            for j in range(0, len(res[i])):
+                if res[i][j] < t:
+                    res[i][j] = 0
+                else:
+                    res[i][j] = 1
+        return res
