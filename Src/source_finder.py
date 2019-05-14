@@ -9,6 +9,7 @@ from astropy.wcs import WCS
 from gaussian_interpolation import GInterpolation as gi
 from util import Util
 from point_data import PointDataList
+import numpy as np
 
 
 class SourceFinder:
@@ -16,7 +17,8 @@ class SourceFinder:
     def __init__(self, conf_file_name):
         """Constructor"""
         self.parameters = Util.read_list_from_json_file(conf_file_name)
-        self.matrix = None
+        self.original = None
+        self.images = []
 
     def compute_coords(self):
         """"""
@@ -31,7 +33,7 @@ class SourceFinder:
         for skymap in sorted(os.listdir('.')):
             if skymap.endswith('.fits'):
                 print(skymap)
-                self.matrix = Util.from_fits_to_mat(skymap)
+                self.original = Util.from_fits_to_mat(skymap)
                 measures = self.compute_measures(skymap.split('.')[0])
                 src_pix_pos = self.best_candidate(measures)
                 if src_pix_pos:
@@ -91,44 +93,45 @@ class SourceFinder:
 
     def update_intensity(self, maxima, step, point_data_list):
         for maximum_a in maxima[:self.parameters['intensity']['maxima_per_iter']]:
-            point_data_list.set(maximum_a[0], maximum_a[1], step)
+            val = maximum_a[1]
+            point_data_list.set(maximum_a[0], val, step)
 
     @staticmethod
     def sorted_maxima(smoothed, sigma):
         """"""
         maxima = Util.local_maxima(smoothed)
         # if sigma >= 0.5:
-        #     maxima = gi.optimize_maxima(smoothed, maxima, sigma)
+        #    maxima = gi.optimize_maxima(smoothed, maxima, sigma)
         maxima = Util.sort_list(maxima, 1, True)
         return maxima
 
-    def smooth_image(self, sigma, last_sigma, smoothed):
-        if last_sigma == 0 or sigma <= last_sigma:
-            smoothed = cv.GaussianBlur(self.matrix, Util.kernel_size(sigma), sigma)
-        else:
-            sigma_to_add = math.sqrt(pow(sigma, 2) - pow(last_sigma, 2))
-            smoothed = cv.GaussianBlur(smoothed, Util.kernel_size(sigma_to_add), sigma_to_add)
-        return smoothed
+    def smooth_image(self):
+        self.images = []
+        last_sigma = 0
+        for sigma in self.parameters['sigma_array']:
+            if last_sigma == 0 or sigma <= last_sigma:
+                self.images.append(cv.GaussianBlur(self.original, Util.kernel_size(sigma), sigma))
+            else:
+                sigma_to_add = math.sqrt(pow(sigma, 2) - pow(last_sigma, 2))
+                self.images.append(cv.GaussianBlur(self.images[-1], Util.kernel_size(sigma_to_add), sigma_to_add))
+            last_sigma = sigma
 
     def compute_measures(self, skymap):
         """"""
-        smoothed = None
-        last_sigma = 0
         measures = {}
 
         for key in self.parameters['active_measures']:
             measures[key] = PointDataList(self.parameters[key]['dist_thresh'])
 
-        for step in range(0, len(self.parameters['sigma_array'])):
+        self.smooth_image()
+        for step in range(0, len(self.images)):
             sigma = self.parameters['sigma_array'][step]
-            smoothed = self.smooth_image(sigma, last_sigma, smoothed)
-            last_sigma = sigma
-            maxima = self.sorted_maxima(smoothed, sigma)
-
+            maxima = self.sorted_maxima(self.images[step], sigma)
             for key in self.parameters['active_measures']:
                 getattr(self, self.parameters[key]['method'])(maxima, step, measures[key])
 
         for key in measures.keys():
+            # print(measures[key].to_string())
             Util.write_list_to_json_file(measures[key].to_list(), 'Measures/' + skymap + '_' + key + '.json')
 
         return measures

@@ -194,7 +194,10 @@ def analyse_src_data(computed_coords, dir_name):
 
     for skymap in sorted(os.listdir(skymaps_path)):
         if skymap.endswith('.fits'):
-            present_coords.append(true_coords[int(skymap.split('.')[0].lstrip('0'))])
+            index = skymap.split('.')[0].lstrip('0')
+            if index == '':
+                index = '0'
+            present_coords.append(true_coords[int(index)])
 
     print("true coordinates:", present_coords)
     print("computed coordinates:", computed_coords)
@@ -281,7 +284,7 @@ def run(bkg_only=False, dir_name=None, compute=False):
         run_source_finder()
 
     analyse_dir(dir_name, bkg_only)
-    # plot_data(dir_name, measures)
+    plot_data(dir_name, measures)
 
     os.chdir("tests")
 
@@ -290,4 +293,4 @@ def run(bkg_only=False, dir_name=None, compute=False):
 # run()  # GENERATE NEW SRC SKYMAPS
 run(dir_name='20190423-155620_default_2.0', compute=True)  # ANALYSE SRC SKYMAPS IN DIR_NAME/SKYMAPS/
 # run(bkg_only=True, compute=False)  # GENERATE NEW BKG_ONLY SKYMAPS
-# run(bkg_only=True, dir_name='20190424-114914_background_only', compute=True)  # ANALYSE BKG_ONLY SKYMAPS IN DIR_NAME/SKYMAPS
+#run(bkg_only=True, dir_name='20190424-114914_background_only', compute=True)  # ANALYSE BKG_ONLY SKYMAPS IN DIR_NAME/SKYMAPS

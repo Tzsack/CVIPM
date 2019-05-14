@@ -49,21 +49,51 @@ class PointDataList:
                 point.add(point.latest, 0)
 
     def get_point(self, coords):
+        compatibles = []
+
         for point in self.points:
             if point.compatible(coords):
-                return point
-        return None
+                compatibles.append(point)
+
+        if not compatibles:
+            return None
+
+        if len(compatibles) == 1:
+            return compatibles[0]
+
+        distance = None
+        best = compatibles[0]
+        for point in compatibles:
+            d = Util.distance_eu(point.latest, coords)
+            if not distance or distance > d:
+                best = point
+                distance = d
+        return best
 
     def set(self, coords, value, index):
-        found = False
+        # found = False
+        compatibles = []
+
         for point in self.points:
-            if point.compatible(coords) and not found:
-                point.set(coords, value, index)
-                found = True
-        if not found:
+            if point.compatible(coords):
+                compatibles.append(point)
+                # point.set(coords, value, index)
+                # found = True
+
+        if not compatibles:
             point = PointData(coords, self.comp_radius)
             point.set(coords, value, index)
             self.points.append(point)
+        else:
+            distance = None
+            best = compatibles[0]
+            for point in compatibles:
+                d = Util.distance_eu(point.latest, coords)
+                if not distance or distance > d:
+                    best = point
+                    distance = d
+            best.set(coords, value, index)
+
         self.pad()
 
     def project_list(self, index):
