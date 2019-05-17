@@ -1,13 +1,12 @@
 {
-    "dir": "../Tests/20190424-095047_background_only/Skymaps",
+    "dir": "../Tests/20190423-155620_default_2.0/Skymaps",
     "sigma_array": [
-        1.6,
-        1.9,
-        2.2,
+        2.4,
         2.5,
-        2.8,
-        3.1,
-        3.4
+        3,
+        3.6,
+        4,
+        7
     ],
     "active_measures": [
         "intensity"
@@ -21,10 +20,10 @@
         "method": "update_isolatedness"
     },
     "intensity": {
-        "maxima_per_iter": 3,
-        "vote_threshold": 1.18,
+        "maxima_per_iter": 2,
+        "vote_threshold": 1.185,
         "vote_weight": 1.0,
-        "dist_thresh": 10,
+        "dist_thresh": 5,
         "method": "update_intensity"
     },
     "election_dist_thresh": 0.1
